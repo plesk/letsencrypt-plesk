@@ -7,8 +7,8 @@ setup(
     install_requires=[
         'acme',
         'letsencrypt',
-        'zope.interface',
         'requests',
+        'zope.interface',
     ],
     entry_points={
         'letsencrypt.plugins': [
