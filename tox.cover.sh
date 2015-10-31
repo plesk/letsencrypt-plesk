@@ -26,7 +26,7 @@ cover () {
   elif [ "$1" = "letshelp_letsencrypt" ]; then
     min=100
   elif [ "$1" = "letsencrypt_plesk" ]; then
-    min=100
+    min=72
   else
     echo "Unrecognized package: $1"
     exit 1
