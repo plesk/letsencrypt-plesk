@@ -19,9 +19,25 @@ if sys.version_info < (2, 7):
 else:
     install_requires.append('mock')
 
+dev_extras = [
+    # Pin astroid==1.3.5, pylint==1.4.2 as a workaround for #289
+    'astroid==1.3.5',
+    'pylint==1.4.2',  # upstream #248
+    'twine',
+    'wheel',
+]
+
 docs_extras = [
     'Sphinx>=1.0',  # autodoc_member_order = 'bysource', autodoc_default_flags
     'sphinx_rtd_theme',
+]
+
+testing_extras = [
+    'coverage',
+    'nose',
+    'nosexcover',
+    'pep8',
+    'tox',
 ]
 
 setup(
@@ -53,7 +69,9 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     extras_require={
+        'dev': dev_extras,
         'docs': docs_extras,
+        'testing': testing_extras,
     },
     entry_points={
         'letsencrypt.plugins': [
