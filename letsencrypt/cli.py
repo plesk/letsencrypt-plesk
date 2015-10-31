@@ -53,35 +53,50 @@ SHORT_USAGE = """
 
 The Let's Encrypt agent can obtain and install HTTPS/TLS/SSL certificates.  By
 default, it will attempt to use a webserver both for obtaining and installing
-the cert.  """
-
-# This is the short help for letsencrypt --help, where we disable argparse
-# altogether
-USAGE = SHORT_USAGE + """Major SUBCOMMANDS are:
+the cert. Major SUBCOMMANDS are:
 
   (default) run        Obtain & install a cert in your current webserver
-  auth                 Authenticate & obtain cert, but do not install it
+  certonly             Obtain cert, but do not install it (aka "auth")
   install              Install a previously obtained cert in a server
   revoke               Revoke a previously obtained certificate
   rollback             Rollback server configuration changes made during install
   config_changes       Show changes made to server config during installation
 
-Choice of server for authentication/installation:
+"""
 
-  --apache          Use the Apache plugin for authentication & installation
-  --nginx           Use the Nginx plugin for authentication & installation
+# This is the short help for letsencrypt --help, where we disable argparse
+# altogether
+USAGE = SHORT_USAGE + """Choice of server plugins for obtaining and installing cert:
+
+  %s
   --standalone      Run a standalone webserver for authentication
-  OR:
-  --authenticator standalone --installer nginx
+  %s
+
+OR use different servers to obtain (authenticate) the cert and then install it:
+
+  --authenticator standalone --installer apache
 
 More detailed help:
 
   -h, --help [topic]    print this message, or detailed help on a topic;
                         the available topics are:
 
-   all, apache, automation, manual, nginx, paths, security, testing, or any of
-   the subcommands
+   all, automation, paths, security, testing, or any of the subcommands or
+   plugins (certonly, install, nginx, apache, standalone, etc)
 """
+
+
+def usage_strings(plugins):
+    """Make usage strings late so that plugins can be initialised late"""
+    if "nginx" in plugins:
+        nginx_doc = "--nginx           Use the Nginx plugin for authentication & installation"
+    else:
+        nginx_doc = "(nginx support is experimental, buggy, and not installed by default)"
+    if "apache" in plugins:
+        apache_doc = "--apache          Use the Apache plugin for authentication & installation"
+    else:
+        apache_doc = "(the apache plugin is not installed)"
+    return USAGE % (apache_doc, nginx_doc), SHORT_USAGE
 
 
 def _find_domains(args, installer):
@@ -341,7 +356,7 @@ def diagnose_configurator_problem(cfg_type, requested, plugins):
 
     :param str cfg_type: either "installer" or "authenticator"
     :param str requested: the plugin that was requested
-    :param PluginRegistry plugins: available plugins
+    :param .PluginsRegistry plugins: available plugins
 
     :raises error.PluginSelectionError: if there was a problem
     """
@@ -351,16 +366,17 @@ def diagnose_configurator_problem(cfg_type, requested, plugins):
             msg = "The requested {0} plugin does not appear to be installed".format(requested)
         else:
             msg = ("The {0} plugin is not working; there may be problems with "
-                   "your existing configuration").format(requested)
+                   "your existing configuration.\nThe error was: {1!r}"
+                   .format(requested, plugins[requested].problem))
     elif cfg_type == "installer":
         if os.path.exists("/etc/debian_version"):
             # Debian... installers are at least possible
             msg = ('No installers seem to be present and working on your system; '
-                   'fix that or try running letsencrypt with the "auth" command')
+                   'fix that or try running letsencrypt with the "certonly" command')
         else:
             # XXX update this logic as we make progress on #788 and nginx support
             msg = ('No installers are available on your OS yet; try running '
-                   '"letsencrypt-auto auth" to get a cert you can install manually')
+                   '"letsencrypt-auto certonly" to get a cert you can install manually')
     else:
         msg = "{0} could not be determined or is not installed".format(cfg_type)
     raise PluginSelectionError(msg)
@@ -375,7 +391,7 @@ def choose_configurator_plugins(args, config, plugins, verb):
 
     # Which plugins do we need?
     need_inst = need_auth = (verb == "run")
-    if verb == "auth":
+    if verb == "certonly":
         need_auth = True
     if verb == "install":
         need_inst = True
@@ -436,6 +452,7 @@ def run(args, config, plugins):  # pylint: disable=too-many-branches,too-many-lo
     le_client.deploy_certificate(
         domains, lineage.privkey, lineage.cert,
         lineage.chain, lineage.fullchain)
+
     le_client.enhance_config(domains, args.redirect)
 
     if len(lineage.available_versions("cert")) == 1:
@@ -444,7 +461,7 @@ def run(args, config, plugins):  # pylint: disable=too-many-branches,too-many-lo
         display_ops.success_renewal(domains)
 
 
-def auth(args, config, plugins):
+def obtaincert(args, config, plugins):
     """Authenticate & obtain cert, but do not install it."""
 
     if args.domains is not None and args.csr is not None:
@@ -454,7 +471,7 @@ def auth(args, config, plugins):
 
     try:
         # installers are used in auth mode to determine domain names
-        installer, authenticator = choose_configurator_plugins(args, config, plugins, "auth")
+        installer, authenticator = choose_configurator_plugins(args, config, plugins, "certonly")
     except PluginSelectionError, e:
         return e.message
 
@@ -478,7 +495,8 @@ def install(args, config, plugins):
     # XXX: Update for renewer/RenewableCert
 
     try:
-        installer, _ = choose_configurator_plugins(args, config, plugins, "auth")
+        installer, _ = choose_configurator_plugins(args, config,
+                                                   plugins, "install")
     except PluginSelectionError, e:
         return e.message
 
@@ -604,11 +622,23 @@ class HelpfulArgumentParser(object):
     'letsencrypt --help security' for security options.
 
     """
+
+    # Maps verbs/subcommands to the functions that implement them
+    VERBS = {"auth": obtaincert, "certonly": obtaincert,
+             "config_changes": config_changes, "everything": run,
+             "install": install, "plugins": plugins_cmd,
+             "revoke": revoke, "rollback": rollback, "run": run}
+
+    # List of topics for which additional help can be provided
+    HELP_TOPICS = ["all", "security",
+                   "paths", "automation", "testing"] + VERBS.keys()
+
     def __init__(self, args, plugins):
         plugin_names = [name for name, _p in plugins.iteritems()]
-        self.help_topics = HELP_TOPICS + plugin_names + [None]
+        self.help_topics = self.HELP_TOPICS + plugin_names + [None]
+        usage, short_usage = usage_strings(plugins)
         self.parser = configargparse.ArgParser(
-            usage=SHORT_USAGE,
+            usage=short_usage,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             args_for_setting_config_path=["-c", "--config"],
             default_config_files=flag_default("config_files"))
@@ -617,39 +647,55 @@ class HelpfulArgumentParser(object):
         self.parser._add_config_file_help = False  # pylint: disable=protected-access
         self.silent_parser = SilentParser(self.parser)
 
-        self.verb = None
-        self.args = self.preprocess_args(args)
+        self.args = args
+        self.determine_verb()
         help1 = self.prescan_for_flag("-h", self.help_topics)
         help2 = self.prescan_for_flag("--help", self.help_topics)
         assert max(True, "a") == "a", "Gravity changed direction"
         help_arg = max(help1, help2)
         if help_arg is True:
             # just --help with no topic; avoid argparse altogether
-            print USAGE
+            print usage
             sys.exit(0)
         self.visible_topics = self.determine_help_topics(help_arg)
         #print self.visible_topics
         self.groups = {}  # elements are added by .add_group()
 
-    def preprocess_args(self, args):
-        """Work around some limitations in argparse.
+    def parse_args(self):
+        """Parses command line arguments and returns the result.
 
-        Currently: add the default verb "run" as a default, and ensure that the
-        subcommand / verb comes last.
+        :returns: parsed command line arguments
+        :rtype: argparse.Namespace
+
         """
-        if "-h" in args or "--help" in args:
+        parsed_args = self.parser.parse_args(self.args)
+        parsed_args.func = self.VERBS[self.verb]
+
+        return parsed_args
+
+    def determine_verb(self):
+        """Determines the verb/subcommand provided by the user.
+
+        This function works around some of the limitations of argparse.
+
+        """
+        if "-h" in self.args or "--help" in self.args:
             # all verbs double as help arguments; don't get them confused
             self.verb = "help"
-            return args
+            return
 
-        for i, token in enumerate(args):
-            if token in VERBS:
-                reordered = args[:i] + args[(i + 1):] + [args[i]]
-                self.verb = token
-                return reordered
+        for i, token in enumerate(self.args):
+            if token in self.VERBS:
+                verb = token
+                if verb == "auth":
+                    verb = "certonly"
+                if verb == "everything":
+                    verb = "run"
+                self.verb = verb
+                self.args.pop(i)
+                return
 
         self.verb = "run"
-        return args + ["run"]
 
     def prescan_for_flag(self, flag, possible_arguments):
         """Checks cli input for flags.
@@ -730,6 +776,10 @@ class HelpfulArgumentParser(object):
         """
         # topics maps each topic to whether it should be documented by
         # argparse on the command line
+        if chosen_topic == "auth":
+            chosen_topic = "certonly"
+        if chosen_topic == "everything":
+            chosen_topic = "run"
         if chosen_topic == "all":
             return dict([(t, True) for t in self.help_topics])
         elif not chosen_topic:
@@ -738,8 +788,16 @@ class HelpfulArgumentParser(object):
             return dict([(t, t == chosen_topic) for t in self.help_topics])
 
 
-def create_parser(plugins, args):
-    """Create parser."""
+def prepare_and_parse_args(plugins, args):
+    """Returns parsed command line arguments.
+
+    :param .PluginsRegistry plugins: available plugins
+    :param list args: command line arguments with the program name removed
+
+    :returns: parsed command line arguments
+    :rtype: argparse.Namespace
+
+    """
     helpful = HelpfulArgumentParser(args, plugins)
 
     # --help is automatically provided by argparse
@@ -793,7 +851,7 @@ def create_parser(plugins, args):
         "testing", "--no-verify-ssl", action="store_true",
         help=config_help("no_verify_ssl"),
         default=flag_default("no_verify_ssl"))
-    helpful.add(  # TODO: apache plugin does NOT respect it (#479)
+    helpful.add(
         "testing", "--dvsni-port", type=int, default=flag_default("dvsni_port"),
         help=config_help("dvsni_port"))
     helpful.add("testing", "--simple-http-port", type=int,
@@ -802,13 +860,16 @@ def create_parser(plugins, args):
     helpful.add_group(
         "security", description="Security parameters & server settings")
     helpful.add(
-        "security", "-B", "--rsa-key-size", type=int, metavar="N",
+        "security", "--rsa-key-size", type=int, metavar="N",
         default=flag_default("rsa_key_size"), help=config_help("rsa_key_size"))
-    # TODO: resolve - assumes binary logic while client.py assumes ternary.
     helpful.add(
-        "security", "-r", "--redirect", action="store_true",
+        "security", "--redirect", action="store_true",
         help="Automatically redirect all HTTP traffic to HTTPS for the newly "
-             "authenticated vhost.")
+             "authenticated vhost.", dest="redirect", default=None)
+    helpful.add(
+        "security", "--no-redirect", action="store_false",
+        help="Do not automatically redirect all HTTP traffic to HTTPS for the newly "
+             "authenticated vhost.", dest="redirect", default=None)
     helpful.add(
         "security", "--strict-permissions", action="store_true",
         help="Require that all configuration files are owned by the current "
@@ -821,45 +882,21 @@ def create_parser(plugins, args):
 
     _create_subparsers(helpful)
 
-    return helpful.parser, helpful.args
-
-
-# For now unfortunately this constant just needs to match the code below;
-# there isn't an elegant way to autogenerate it in time.
-VERBS = ["run", "auth", "install", "revoke", "rollback", "config_changes", "plugins"]
-HELP_TOPICS = ["all", "security", "paths", "automation", "testing"] + VERBS
+    return helpful.parse_args()
 
 
 def _create_subparsers(helpful):
-    subparsers = helpful.parser.add_subparsers(metavar="SUBCOMMAND")
-
-    def add_subparser(name):  # pylint: disable=missing-docstring
-        if name == "plugins":
-            func = plugins_cmd
-        else:
-            func = eval(name)  # pylint: disable=eval-used
-        h = func.__doc__.splitlines()[0]
-        subparser = subparsers.add_parser(name, help=h, description=func.__doc__)
-        subparser.set_defaults(func=func)
-        return subparser
-
-    # the order of add_subparser() calls is important: it defines the
-    # order in which subparser names will be displayed in --help
-    # these add_subparser objects return objects to which arguments could be
-    # attached, but they have annoying arg ordering constrains so we use
-    # groups instead: https://github.com/letsencrypt/letsencrypt/issues/820
-    for v in VERBS:
-        add_subparser(v)
-
-    helpful.add_group("auth", description="Options for modifying how a cert is obtained")
+    helpful.add_group("certonly", description="Options for modifying how a cert is obtained")
     helpful.add_group("install", description="Options for modifying how a cert is deployed")
     helpful.add_group("revoke", description="Options for revocation of certs")
     helpful.add_group("rollback", description="Options for reverting config changes")
     helpful.add_group("plugins", description="Plugin options")
 
-    helpful.add("auth",
+    helpful.add("certonly",
                 "--csr", type=read_file,
-                help="Path to a Certificate Signing Request (CSR) in DER format.")
+                help="Path to a Certificate Signing Request (CSR) in DER"
+                " format; note that the .csr file *must* contain a Subject"
+                " Alternative Name field for each domain you want certified.")
     helpful.add("rollback",
                 "--checkpoints", type=int, metavar="N",
                 default=flag_default("rollback_checkpoints"),
@@ -883,7 +920,7 @@ def _paths_parser(helpful):
         "paths", description="Arguments changing execution paths & servers")
 
     cph = "Path to where cert is saved (with auth), installed (with install --csr) or revoked."
-    if verb == "auth":
+    if verb == "certonly":
         add("paths", "--cert-path", default=flag_default("auth_cert_path"), help=cph)
     elif verb == "revoke":
         add("paths", "--cert-path", type=read_file, required=True, help=cph)
@@ -896,7 +933,7 @@ def _paths_parser(helpful):
         help="Path to private key for cert creation or revocation (if account key is missing)")
 
     default_cp = None
-    if verb == "auth":
+    if verb == "certonly":
         default_cp = flag_default("auth_chain_path")
     add("paths", "--fullchain-path", default=default_cp,
         help="Accompanying path to a full certificate chain (cert plus chain).")
@@ -1040,8 +1077,7 @@ def main(cli_args=sys.argv[1:]):
 
     # note: arg parser internally handles --help (and exits afterwards)
     plugins = plugins_disco.PluginsRegistry.find_all()
-    parser, tweaked_cli_args = create_parser(plugins, cli_args)
-    args = parser.parse_args(tweaked_cli_args)
+    args = prepare_and_parse_args(plugins, cli_args)
     config = configuration.NamespaceConfig(args)
     zope.component.provideUtility(config)
 
