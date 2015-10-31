@@ -63,10 +63,3 @@ after_success: '[ "$TOXENV" == "cover" ] && coveralls'
 
 notifications:
   email: false
-  irc:
-    channels:
-      - "chat.freenode.net#letsencrypt"
-    on_success: never
-    on_failure: always
-    use_notice: true
-    skip_join: true
