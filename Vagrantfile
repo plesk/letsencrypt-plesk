@@ -10,6 +10,7 @@ cd /vagrant
 ./tools/plesk-vagrant.sh
 ./bootstrap/install-deps.sh
 ./bootstrap/dev/venv.sh
+grep "venv" ~/.bashrc || echo "source /vagrant/venv/bin/activate" >> ~/.bashrc
 SETUP_SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
