@@ -62,7 +62,7 @@ class PleskConfiguratorTest(unittest.TestCase):
         self.assertEqual([], self.configurator.get_all_certs_keys())
 
     def test_get_chall_pref(self):
-        self.assertEqual([challenges.SimpleHTTP],
+        self.assertEqual([challenges.HTTP01],
                          self.configurator.get_chall_pref('example.com'))
 
 if __name__ == "__main__":

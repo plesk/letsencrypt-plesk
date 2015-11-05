@@ -56,7 +56,7 @@ class PleskConfigurator(common.Plugin):
     @staticmethod
     def get_chall_pref(unused_domain):
         """Return list of challenge preferences."""
-        return [challenges.SimpleHTTP]
+        return [challenges.HTTP01]
 
     def perform(self, achalls):
         """Perform the configuration related challenge."""

@@ -21,12 +21,12 @@ class PleskChallenge(object):
 
     def perform(self, achall):
         """Perform a challenge on Plesk."""
-        response, validation = achall.gen_response_and_validation(False)
+        response, validation = achall.response_and_validation()
         self._put_validation_file(
             domain=achall.domain,
-            file_path=response.URI_ROOT_PATH,
+            file_path=achall.URI_ROOT_PATH,
             file_name=achall.chall.encode("token"),
-            content=validation.json_dumps())
+            content=validation.encode())
         return response
 
     def _put_validation_file(self, domain, file_path, file_name, content):
