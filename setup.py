@@ -44,7 +44,7 @@ setup(
     name='letsencrypt-plesk',
     version=version,
     description="Plesk plugin for Let's Encrypt client",
-    url='https://github.com/plesk/letsencrypt-plugin',
+    url='https://github.com/plesk/letsencrypt-plesk',
     author='Eugene Kazakov',
     author_email='eugene.a.kazakov@gmail.com',
     license='Apache License 2.0',
