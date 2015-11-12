@@ -18,7 +18,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "ubuntu-trusty", primary: true do |ubuntu_trusty|
     ubuntu_trusty.vm.box = "ubuntu/trusty64"
     ubuntu_trusty.vm.provider "parallels" do |v|
+      # trusty box is not built for parallels desktop
       ubuntu_trusty.vm.box = "puphpet/ubuntu1404-x64"
+    end
+
+    ubuntu_trusty.vm.provider "virtualbox" do |v|
+      # hard links are not supported - could not prepare build
+      config.vm.network "private_network", type: "dhcp"
+      config.vm.synced_folder ".", "/vagrant", type: "nfs"
     end
 
     ubuntu_trusty.vm.provision "shell", inline: $ubuntu_setup_script
