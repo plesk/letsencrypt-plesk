@@ -1,10 +1,24 @@
+import codecs
+import os
+import re
 import sys
 
 from setuptools import setup
 from setuptools import find_packages
 
 
-version = '0.1.0.dev0'
+def read_file(filename, encoding='utf8'):
+    """Read unicode from given file."""
+    with codecs.open(filename, encoding=encoding) as fd:
+        return fd.read()
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+# read version number (and other metadata) from package init
+init_fn = os.path.join(here, 'letsencrypt_plesk', '__init__.py')
+meta = dict(re.findall(r"""__([a-z]+)__ = '([^']+)""", read_file(init_fn)))
+
+version = meta['version']
 
 install_requires = [
     'acme',
