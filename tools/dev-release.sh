@@ -51,12 +51,15 @@ do
     gpg2 --detach-sign --armor --sign $x
 done
 
-mv dist "dist.$version"
+mkdir "dist.$version"
+mv dist "dist.$version/letsencrypt-plesk"
 
 echo "Testing packages"
 cd "dist.$version"
 # start local PyPI
 python -m SimpleHTTPServer $PORT &
+local_pypi_pid=$!
+echo "Local PyPI PID $local_pypi_pid"
 # cd .. is NOT done on purpose: we make sure that all subpackages are
 # installed from local PyPI rather than current directory (repo root)
 virtualenv --no-site-packages ../venv
@@ -65,10 +68,12 @@ pip install -U setuptools
 pip install -U pip
 # Now, use our local PyPI
 pip install \
+  -i https://testpypi.python.org/pypi \
+  --extra-index-url https://pypi.python.org/simple \
   --extra-index-url http://localhost:$PORT \
   letsencrypt-plesk
 # stop local PyPI
-kill $!
+kill $local_pypi_pid
 
 # freeze before installing anything else, so that we know end-user KGS
 # make sure "twine upload" doesn't catch "kgs"
