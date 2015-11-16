@@ -1,6 +1,7 @@
 """Plesk Configuration"""
 import logging
 
+import os
 import zope.interface
 
 from acme import challenges
@@ -26,7 +27,7 @@ class PleskConfigurator(common.Plugin):
 
     @classmethod
     def add_parser_arguments(cls, add):
-        add("secret-key", default=None,
+        add("secret-key", default=os.getenv('LE_PLESK_SECRET_KEY'),
             help="Plesk API-RPC authentication secret key.")
 
     def __init__(self, *args, **kwargs):
@@ -71,8 +72,7 @@ class PleskConfigurator(common.Plugin):
         for x in achalls:
             if x.domain in self.plesk_challenges:
                 self.plesk_challenges[x.domain].cleanup(x)
-        # TODO too early to cleanup api
-        # self.plesk_api_client.cleanup()
+        self.plesk_api_client.cleanup()
 
     # Installer methods below
 
@@ -174,7 +174,6 @@ class PleskConfigurator(common.Plugin):
         """Plesk configuration is always valid."""
         pass  # pragma: no cover
 
-    @staticmethod
-    def restart():
-        """Web server has already restarted."""
-        pass  # pragma: no cover
+    def restart(self):
+        """Web server has already restarted. Cleanup only."""
+        self.plesk_api_client.cleanup()
