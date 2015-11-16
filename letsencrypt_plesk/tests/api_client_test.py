@@ -9,7 +9,7 @@ from letsencrypt_plesk import api_client
 
 class PleskApiClientTest(unittest.TestCase):
     TEST_DATA_PATH = pkg_resources.resource_filename(
-            "letsencrypt_plesk.tests", "testdata")
+        "letsencrypt_plesk.tests", "testdata")
 
     def setUp(self):
         super(PleskApiClientTest, self).setUp()
