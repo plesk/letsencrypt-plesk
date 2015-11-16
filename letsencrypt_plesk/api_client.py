@@ -14,8 +14,9 @@ logger = logging.getLogger(__name__)
 class PleskApiClient(object):
     """Class performs API-RPC requests to Plesk"""
 
-    CLI_PATH = "/usr/local/psa/bin/"
-    BIN_PATH = "/usr/local/psa/admin/bin/"
+    PSA_PATH = "/usr/local/psa/"
+    CLI_PATH = os.path.join(PSA_PATH, "bin")
+    BIN_PATH = os.path.join(PSA_PATH, "admin", "bin")
 
     def __init__(self, host='127.0.0.1', port=8443, secret_key=None):
         self.host = host
@@ -23,6 +24,19 @@ class PleskApiClient(object):
         self.scheme = 'https' if port == 8443 else 'http'
         self.secret_key_created = False
         self.secret_key = secret_key
+
+    def check_version(self):
+        """Check Plesk installed and version is supported"""
+        if self.secret_key:
+            return
+        version = os.path.join(self.PSA_PATH, "version")
+        if not os.path.exists(version):
+            raise errors.NoInstallationError('Plesk is not installed')
+        with open(version, 'r') as f:
+            version_data = f.read()
+            if not version_data.startswith('12.'):
+                raise errors.NotSupportedError(
+                    'Plesk version is not supported: %s' % version_data)
 
     def request(self, request):
         """Perform API-RPC request to Plesk"""
@@ -49,9 +63,9 @@ class PleskApiClient(object):
         """Retrieve secret key for Plesk API or creates a new one"""
         if self.secret_key:
             return self.secret_key
-        self.secret_key = self.execute(self.CLI_PATH + "secret_key", [
-            "--create", "-ip-address", "127.0.0.1", "-description", __name__,
-        ])
+        self.secret_key = self.execute(
+            os.path.join(self.CLI_PATH, "secret_key"),
+            ["--create", "-ip-address", "127.0.0.1", "-description", __name__])
         self.secret_key_created = True
         return self.secret_key
 
@@ -59,9 +73,9 @@ class PleskApiClient(object):
         """Remove secret key from Plesk if it was created"""
         if self.secret_key and self.secret_key_created:
             try:
-                self.execute(self.CLI_PATH + "secret_key", [
-                    "--delete", "-key", self.secret_key,
-                ])
+                self.execute(
+                    os.path.join(self.CLI_PATH, "secret_key"),
+                    ["--delete", "-key", self.secret_key])
             except PleskApiException as e:
                 logger.debug(str(e))
             self.secret_key = None
@@ -82,7 +96,7 @@ class PleskApiClient(object):
     def filemng(self, args):
         """File operations in Plesk are implemented in filemng util"""
         # TODO replace with ftp client
-        return self.execute(self.BIN_PATH + "filemng", args)
+        return self.execute(os.path.join(self.BIN_PATH, "filemng"), args)
 
 
 class PleskApiException(errors.PluginError):

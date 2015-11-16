@@ -11,6 +11,7 @@ class PleskApiMock(object):
 
     def __init__(self):
         self.request = mock.MagicMock()
+        self.check_version = mock.MagicMock()
         self._request = None
 
     def expects_request(self, request):

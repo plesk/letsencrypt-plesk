@@ -43,8 +43,7 @@ class PleskConfigurator(common.Plugin):
         if self.plesk_api_client is None:
             self.plesk_api_client = api_client.PleskApiClient(
                 secret_key=self.conf('secret-key'))
-        # TODO raise .NoInstallationError when Plesk cannot be located
-        # TODO raise .NotSupportedError when Plesk version is not supported
+        self.plesk_api_client.check_version()
 
     @staticmethod
     def more_info():
