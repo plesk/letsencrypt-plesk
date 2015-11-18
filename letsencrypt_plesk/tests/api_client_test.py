@@ -37,5 +37,12 @@ class PleskApiClientTest(unittest.TestCase):
         self.plesk_api_client.secret_key = '3c4941c1-890b-5690-0c44f037ed1c'
         self.plesk_api_client.check_version()
 
+    def test_get_secret_key(self):
+        self.plesk_api_client.secret_key = None
+        self.plesk_api_client.CLI_PATH = os.path.join(
+            self.TEST_DATA_PATH, 'psa', 'bin')
+        self.assertEqual('3c4941c1-890b-5690-0c44f037ed1c',
+                         self.plesk_api_client.get_secret_key())
+
 if __name__ == "__main__":
     unittest.main()  # pragma: no cover

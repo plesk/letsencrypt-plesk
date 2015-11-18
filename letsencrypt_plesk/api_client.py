@@ -63,9 +63,14 @@ class PleskApiClient(object):
         """Retrieve secret key for Plesk API or creates a new one"""
         if self.secret_key:
             return self.secret_key
-        self.secret_key = self.execute(
-            os.path.join(self.CLI_PATH, "secret_key"),
-            ["--create", "-ip-address", "127.0.0.1", "-description", __name__])
+        with os.tmpfile() as key_tmp:
+            self.execute(os.path.join(self.CLI_PATH, "secret_key"),
+                         ["--create",
+                          "-ip-address", "127.0.0.1",
+                          "-description", __name__],
+                         stdout=key_tmp)
+            key_tmp.seek(0)
+            self.secret_key = key_tmp.read()
         self.secret_key_created = True
         return self.secret_key
 
@@ -81,7 +86,9 @@ class PleskApiClient(object):
             self.secret_key = None
             self.secret_key_created = False
 
-    def execute(self, command, arguments=None, stdin=None, environment=None):
+    @staticmethod
+    def execute(command, arguments=None, stdin=None, stdout=None,
+                environment=None):
         """Execute CLI utility"""
         for name, value in (environment or {}).items():
             os.environ[name] = value
@@ -89,14 +96,14 @@ class PleskApiClient(object):
         process_args = [command] + (arguments or [])
         logger.debug("Plesk exec: %s", " ".join(process_args))
         try:
-            return subprocess.check_output(process_args, stdin=stdin)
+            subprocess.check_call(process_args, stdin=stdin, stdout=stdout)
         except subprocess.CalledProcessError as e:
             raise PleskApiException(e)
 
     def filemng(self, args):
         """File operations in Plesk are implemented in filemng util"""
         # TODO replace with ftp client
-        return self.execute(os.path.join(self.BIN_PATH, "filemng"), args)
+        self.execute(os.path.join(self.BIN_PATH, "filemng"), args)
 
 
 class PleskApiException(errors.PluginError):
