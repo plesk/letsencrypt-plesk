@@ -35,7 +35,7 @@ git checkout "$DEV_RELEASE_BRANCH"
 sed -i "s/^__version.*/__version__ = '$version'/" letsencrypt_plesk/__init__.py
 
 git add -p  # interactive user input
-git -c commit.gpgsign=true commit -m "Release $version"
+git commit --gpg-sign="$RELEASE_GPG_KEY" -m "Release $version"
 git tag --local-user "$RELEASE_GPG_KEY" \
     --sign --message "Release $version" "$tag"
 
@@ -68,8 +68,7 @@ pip install -U setuptools
 pip install -U pip
 # Now, use our local PyPI
 pip install \
-  -i https://testpypi.python.org/pypi \
-  --extra-index-url https://pypi.python.org/simple \
+  --extra-index-url https://testpypi.python.org/pypi \
   --extra-index-url http://localhost:$PORT \
   letsencrypt-plesk
 # stop local PyPI
@@ -81,9 +80,13 @@ mkdir ../kgs
 kgs="../kgs/$version"
 pip freeze | tee $kgs
 pip install nose
-nosetests letsencrypt-plesk
+nosetests letsencrypt_plesk
 
 echo "New root: $root"
 echo "KGS is at $root/kgs"
 echo "In order to upload packages run the following command:"
 echo twine upload "$root/dist.$version/*/*"
+echo "git remote remove tmp || true"
+echo "git remote add tmp $root"
+echo "git fetch tmp"
+echo "git push origin v$version"
