@@ -78,12 +78,7 @@ if [ "$VERBOSE" = 1 ]  ; then
   echo
   $VENV_BIN/pip install -U setuptools
   $VENV_BIN/pip install -U pip
-  $VENV_BIN/pip install -U letsencrypt letsencrypt-apache 
-  # nginx is buggy / disabled for now, but upgrade it if the user has
-  # installed it manually
-  if $VENV_BIN/pip freeze | grep -q letsencrypt-nginx ; then
-    $VENV_BIN/pip install -U letsencrypt letsencrypt-nginx 
-  fi
+  $VENV_BIN/pip install -U letsencrypt letsencrypt-plesk
 else
   $VENV_BIN/pip install -U setuptools > /dev/null
   printf .
@@ -92,11 +87,7 @@ else
   # nginx is buggy / disabled for now...
   $VENV_BIN/pip install -U letsencrypt > /dev/null
   printf .
-  $VENV_BIN/pip install -U letsencrypt-apache > /dev/null
-  if $VENV_BIN/pip freeze | grep -q letsencrypt-nginx ; then
-    printf .
-    $VENV_BIN/pip install -U letsencrypt-nginx > /dev/null
-  fi
+  $VENV_BIN/pip install -U letsencrypt-plesk > /dev/null
   echo
 fi
 
