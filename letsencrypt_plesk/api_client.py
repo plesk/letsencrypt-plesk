@@ -139,7 +139,8 @@ class DictToXml(object):  # pylint: disable=too-few-public-methods
             parent.appendChild(tag)
 
     def __str__(self):
-        return self.doc.toprettyxml()
+        # TODO implement separate method for pretty print
+        return self.doc.toxml()
 
 
 class XmlToDict(dict):  # pylint: disable=too-few-public-methods
