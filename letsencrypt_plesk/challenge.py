@@ -1,6 +1,7 @@
 """PleskChallenge"""
 import logging
 import os
+from tempfile import mkstemp
 
 from letsencrypt import errors
 
@@ -50,17 +51,7 @@ class PleskChallenge(object):
 
         self.verify_path = os.path.join(self.www_root, file_path)
         self.full_path = os.path.join(self.www_root, file_path, file_name)
-        tmp_path = os.tempnam()
-        with open(tmp_path, 'w') as f:
-            f.write(str(content))
-            f.close()
-        try:
-            self.plesk_api_client.filemng(
-                [self.ftp_login, "mkdir", self.verify_path, "-p"])
-            self.plesk_api_client.filemng(
-                [self.ftp_login, "cp2perm", tmp_path, self.full_path, "0644"])
-        finally:
-            os.unlink(tmp_path)
+        self._create_file(content)
 
     def cleanup(self, unused_achall):
         """Remove validation file and directories."""
@@ -82,3 +73,15 @@ class PleskChallenge(object):
         parent = os.path.join(os.path.realpath(parent), '')
         common = os.path.commonprefix([child, parent])
         return common == parent and not child == parent
+
+    def _create_file(self, content):
+        fh, tmp_path = mkstemp()
+        with os.fdopen(fh, 'w') as tmp_file:
+            tmp_file.write(str(content))
+        try:
+            self.plesk_api_client.filemng(
+                [self.ftp_login, "mkdir", self.verify_path, "-p"])
+            self.plesk_api_client.filemng(
+                [self.ftp_login, "cp2perm", tmp_path, self.full_path, "0644"])
+        finally:
+            os.unlink(tmp_path)
