@@ -148,10 +148,12 @@ class PleskConfigurator(common.Plugin):
         """Push Plesk to deploy certificate."""
         for domain in self.plesk_deployers:
             plesk_deployer = self.plesk_deployers[domain]
-            if plesk_deployer.cert_name() in plesk_deployer.get_certs():
-                plesk_deployer.remove_cert()
-            plesk_deployer.install_cert()
-            plesk_deployer.assign_cert()
+            if not plesk_deployer.cert_installed:
+                if plesk_deployer.cert_name() in plesk_deployer.get_certs():
+                    plesk_deployer.remove_cert()
+                plesk_deployer.install_cert()
+            if not plesk_deployer.cert_assigned:
+                plesk_deployer.assign_cert()
 
     def rollback_checkpoints(self, unused_rollback=1):
         """Revert deployer state to the previous."""
