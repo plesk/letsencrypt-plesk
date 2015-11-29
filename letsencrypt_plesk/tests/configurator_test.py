@@ -44,8 +44,8 @@ class PleskConfiguratorTest(unittest.TestCase):
         names = self.configurator.get_all_names()
         self.configurator.plesk_api_client.assert_called()
         self.assertEqual(names, [
-            'first.example.com', 'second.example.com', 'third.example.com',
-            'fourth.example.com'])
+            'first.example.com', 'second.example.com', 'xn--d1abbgf6aiiy.xn--p1ai',
+            'third.example.com', 'fourth.example.com'])
 
     def test_supported_enhancements(self):
         self.assertEqual([], self.configurator.supported_enhancements())

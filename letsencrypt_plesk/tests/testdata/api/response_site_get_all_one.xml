@@ -9,6 +9,7 @@
                     <gen_info>
                         <cr_date>2014-03-19</cr_date>
                         <name>first.example.com</name>
+                        <ascii-name>first.example.com</ascii-name>
                     </gen_info>
                 </data>
             </result>
@@ -24,6 +25,7 @@
                     <gen_info>
                         <cr_date>2014-05-13</cr_date>
                         <name>second.example.com</name>
+                        <ascii-name>second.example.com</ascii-name>
                     </gen_info>
                 </data>
             </result>

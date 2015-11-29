@@ -99,7 +99,7 @@ class PleskConfigurator(common.Plugin):
             return [self._get_names(x) for x in api_result]
         if 'ok' != api_result['status'] or 'data' not in api_result:
             return None
-        return api_result['data']['gen_info']['name'].encode('utf8')
+        return api_result['data']['gen_info']['ascii-name']
 
     def _compact_names(self, names):
         compact = []

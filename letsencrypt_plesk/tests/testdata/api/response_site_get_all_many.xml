@@ -9,6 +9,7 @@
                     <gen_info>
                         <cr_date>2014-03-19</cr_date>
                         <name>first.example.com</name>
+                        <ascii-name>first.example.com</ascii-name>
                     </gen_info>
                 </data>
             </result>
@@ -20,6 +21,19 @@
                     <gen_info>
                         <cr_date>2014-04-01</cr_date>
                         <name>second.example.com</name>
+                        <ascii-name>second.example.com</ascii-name>
+                    </gen_info>
+                </data>
+            </result>
+            <result>
+                <status>ok</status>
+                <filter-id>112</filter-id>
+                <id>112</id>
+                <data>
+                    <gen_info>
+                        <cr_date>2015-11-24</cr_date>
+                        <name>президент.рф</name>
+                        <ascii-name>xn--d1abbgf6aiiy.xn--p1ai</ascii-name>
                     </gen_info>
                 </data>
             </result>
@@ -35,6 +49,7 @@
                     <gen_info>
                         <cr_date>2014-05-13</cr_date>
                         <name>third.example.com</name>
+                        <ascii-name>third.example.com</ascii-name>
                     </gen_info>
                 </data>
             </result>
@@ -46,6 +61,7 @@
                     <gen_info>
                         <cr_date>2014-05-13</cr_date>
                         <name>fourth.example.com</name>
+                        <ascii-name>fourth.example.com</ascii-name>
                     </gen_info>
                 </data>
             </result>

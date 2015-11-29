@@ -57,7 +57,7 @@ class PleskApiClient(object):
             headers=headers,
             data=request)
         logger.debug("Plesk API-RPC response: %s", response.text)
-        return XmlToDict(response.text)
+        return XmlToDict(response.text.encode('utf-8'))
 
     def get_secret_key(self):
         """Retrieve secret key for Plesk API or creates a new one"""
@@ -149,7 +149,7 @@ class XmlToDict(dict):  # pylint: disable=too-few-public-methods
     def __init__(self, data, force_array=False):
         dom = parseString(data)
         root = dom.documentElement
-        root_name = root.tagName.encode('utf8')
+        root_name = root.tagName
         self.force_array = force_array
         structure = {
             root_name: self._get_children(root)
@@ -169,7 +169,7 @@ class XmlToDict(dict):  # pylint: disable=too-few-public-methods
 
     @staticmethod
     def _get_text_child(children, child):
-        data = child.data.encode('utf8')
+        data = child.data
         if 0 == len(data.strip()):
             return children
         elif isinstance(children, list):
@@ -180,7 +180,7 @@ class XmlToDict(dict):  # pylint: disable=too-few-public-methods
             return [children, data]
 
     def _get_list_children(self, children, child):
-        child_name = child.tagName.encode('utf8')
+        child_name = child.tagName
         if isinstance(children, dict) and len(children) > 0:
             children = [children]
         if isinstance(children, list):
@@ -190,7 +190,7 @@ class XmlToDict(dict):  # pylint: disable=too-few-public-methods
         return children
 
     def _get_dict_children(self, children, child):
-        child_name = child.tagName.encode('utf8')
+        child_name = child.tagName
         if child_name in children:
             if not isinstance(children[child_name], list):
                 children[child_name] = [children[child_name]]
