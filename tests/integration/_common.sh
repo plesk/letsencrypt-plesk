@@ -15,15 +15,14 @@ letsencrypt_test () {
     letsencrypt \
         --server "${SERVER:-http://localhost:4000/directory}" \
         --no-verify-ssl \
-        --dvsni-port 5001 \
-        --simple-http-port 5002 \
+        --tls-sni-01-port 5001 \
+        --http-01-port 5002 \
         --manual-test-mode \
         $store_flags \
         --text \
         --no-redirect \
-        --agree-dev-preview \
         --agree-tos \
-        --email "" \
+        --register-unsafely-without-email \
         --renew-by-default \
         --debug \
         -vvvvvvv \
