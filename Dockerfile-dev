@@ -53,7 +53,6 @@ COPY tests /opt/letsencrypt/src/tests/
 
 RUN virtualenv --no-site-packages -p python2 /opt/letsencrypt/venv && \
     /opt/letsencrypt/venv/bin/pip install \
-    -r /opt/letsencrypt/src/requirements.txt \
     -e /opt/letsencrypt/src/acme \
     -e /opt/letsencrypt/src \
     -e /opt/letsencrypt/src/letsencrypt-apache \
