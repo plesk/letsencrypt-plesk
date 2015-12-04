@@ -16,6 +16,6 @@ nosetests \
   --cover-erase \
   --with-cover \
   --cover-tests \
-  --cover-min-percentage=77 \
+  --cover-min-percentage=79 \
   --cover-package letsencrypt_plesk \
   letsencrypt_plesk

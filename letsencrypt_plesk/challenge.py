@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 class PleskChallenge(object):
     """Class performs challenges within the Plesk configurator."""
 
-    def __init__(self, plesk_api_client):
+    def __init__(self, domain, plesk_api_client):
+        self.domain = domain
         self.plesk_api_client = plesk_api_client
         self.www_root = None
         self.ftp_login = None
@@ -24,7 +25,7 @@ class PleskChallenge(object):
         """Perform a challenge on Plesk."""
         response, validation = achall.response_and_validation()
         self._put_validation_file(
-            domain=achall.domain,
+            domain=self.domain,
             file_path=achall.URI_ROOT_PATH,
             file_name=achall.chall.encode("token"),
             content=validation.encode())
@@ -50,22 +51,31 @@ class PleskChallenge(object):
             x['value'] for x in hosting_props if 'ftp_login' == x['name'])
 
         self.verify_path = os.path.join(self.www_root, file_path)
-        self.full_path = os.path.join(self.www_root, file_path, file_name)
-        self._create_file(content)
+        full_path = os.path.join(self.verify_path, file_name)
+        self._create_file(full_path, content)
 
-    def cleanup(self, unused_achall):
+    def cleanup(self, achall):
         """Remove validation file and directories."""
         try:
             if self.www_root and self.ftp_login:
-                self.plesk_api_client.filemng(
-                    [self.ftp_login, "rm", self.full_path])
-
-                while self._is_sub_path(self.verify_path, self.www_root):
-                    self.plesk_api_client.filemng(
-                        [self.ftp_login, "rmdir", self.verify_path])
-                    self.verify_path = os.path.dirname(self.verify_path)
+                file_name = achall.chall.encode("token")
+                full_path = os.path.join(self.verify_path, file_name)
+                self._remove_file(full_path)
         except api_client.PleskApiException as e:
             logger.debug(str(e))
+
+    def _remove_file(self, full_path):
+        if os.path.exists(full_path):
+            self.plesk_api_client.filemng(
+                [self.ftp_login, "rm", full_path])
+
+        while self._is_sub_path(self.verify_path, self.www_root):
+            if os.path.exists(self.verify_path):
+                if len(os.listdir(self.verify_path)) > 0:
+                    break
+                self.plesk_api_client.filemng(
+                    [self.ftp_login, "rmdir", self.verify_path])
+            self.verify_path = os.path.dirname(self.verify_path)
 
     @staticmethod
     def _is_sub_path(child, parent):
@@ -74,14 +84,15 @@ class PleskChallenge(object):
         common = os.path.commonprefix([child, parent])
         return common == parent and not child == parent
 
-    def _create_file(self, content):
+    def _create_file(self, full_path, content):
         fh, tmp_path = mkstemp()
         with os.fdopen(fh, 'w') as tmp_file:
             tmp_file.write(str(content))
         try:
+            if not os.path.exists(self.verify_path):
+                self.plesk_api_client.filemng(
+                    [self.ftp_login, "mkdir", self.verify_path, "-p"])
             self.plesk_api_client.filemng(
-                [self.ftp_login, "mkdir", self.verify_path, "-p"])
-            self.plesk_api_client.filemng(
-                [self.ftp_login, "cp2perm", tmp_path, self.full_path, "0644"])
+                [self.ftp_login, "cp2perm", tmp_path, full_path, "0644"])
         finally:
             os.unlink(tmp_path)

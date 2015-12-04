@@ -62,16 +62,26 @@ class PleskConfigurator(common.Plugin):
         """Perform the configuration related challenge."""
         responses = []
         for x in achalls:
-            plesk_challenge = challenge.PleskChallenge(self.plesk_api_client)
-            responses.append(plesk_challenge.perform(x))
-            self.plesk_challenges[x.domain] = plesk_challenge
+            self.plesk_challenges[x.domain] = challenge.PleskChallenge(
+                x.domain, self.plesk_api_client)
+
+        for x in achalls:
+            domain = x.domain
+            if domain.startswith("www."):
+                if domain[4:] in self.plesk_challenges:
+                    domain = domain[4:]
+            responses.append(self.plesk_challenges[domain].perform(x))
         return responses
 
     def cleanup(self, achalls):
         """Revert all challenges."""
         for x in achalls:
-            if x.domain in self.plesk_challenges:
-                self.plesk_challenges[x.domain].cleanup(x)
+            domain = x.domain
+            if domain.startswith("www."):
+                if domain[4:] in self.plesk_challenges:
+                    domain = domain[4:]
+            if domain in self.plesk_challenges:
+                self.plesk_challenges[domain].cleanup(x)
         self.plesk_api_client.cleanup()
 
     # Installer methods below
@@ -130,6 +140,12 @@ class PleskConfigurator(common.Plugin):
     def deploy_cert(self, domain, cert_path, key_path, chain_path=None,
                     fullchain_path=None):  # pylint: disable=unused-argument
         """Initialize deploy certificate in Plesk via API."""
+        if domain.startswith("www."):
+            if domain[4:] in self.plesk_deployers:
+                return
+        elif "www." + domain in self.plesk_deployers:
+            del self.plesk_deployers["www." + domain]
+
         plesk_deployer = deployer.PleskDeployer(self.plesk_api_client, domain)
         with open(cert_path) as cert_file:
             cert_data = cert_file.read()
