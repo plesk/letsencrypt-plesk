@@ -1,7 +1,7 @@
 #!/bin/sh -xe
 # Release dev packages to PyPI
 
-version="0.0.0.dev$(date +%Y%m%d)"
+version="0.1.0.dev$(date +%Y%m%d)"
 DEV_RELEASE_BRANCH="dev-release"
 RELEASE_GPG_KEY="${RELEASE_GPG_KEY:-9B3AF83D}"
 
