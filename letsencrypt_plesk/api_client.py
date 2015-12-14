@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import re
 import requests
 import logging
 
@@ -18,12 +19,32 @@ class PleskApiClient(object):
     CLI_PATH = os.path.join(PSA_PATH, "bin")
     BIN_PATH = os.path.join(PSA_PATH, "admin", "bin")
 
-    def __init__(self, host='127.0.0.1', port=8443, secret_key=None):
+    def __init__(self, host='127.0.0.1', port=8443, secret_key=None, configfile=None):
+        self.configfile = configfile
         self.host = host
         self.port = port
-        self.scheme = 'https' if port == 8443 else 'http'
         self.secret_key_created = False
         self.secret_key = secret_key
+        # Check for port configuration
+        if not self.configfile:
+            self.configfile = "/etc/sw-cp-server/conf.d/plesk.conf"
+        if os.path.exists(self.configfile):
+            configfile = open(self.configfile, 'r')
+            config_list = configfile.readlines()
+            configfile.close()
+            for line in config_list:
+                ssl_port_match_pattern = '(\\s*)(listen\\s)(\\b\\d{2,5}\\b)(\\sssl)'
+                non_ssl_port_match_pattern = '(\\s*)(listen\\s)(\\b\\d{2,5}\\b)(;)'
+                ssl_matches = re.match(ssl_port_match_pattern, line)
+                non_ssl_matches = re.match(non_ssl_port_match_pattern, line)
+                if ssl_matches:
+                    self.port = int(ssl_matches.group(3))
+                    self.scheme = 'https'
+                    break
+                elif non_ssl_matches:
+                    self.port = int(non_ssl_matches.group(3))
+                    self.scheme = 'http'
+                    break
 
     def check_version(self):
         """Check Plesk installed and version is supported"""
