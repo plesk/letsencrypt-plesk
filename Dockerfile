@@ -32,7 +32,7 @@ RUN /opt/letsencrypt/src/ubuntu.sh && \
 # Dockerfile we make sure we cache as much as possible
 
 
-COPY setup.py README.rst CHANGES.rst MANIFEST.in /opt/letsencrypt/src/
+COPY setup.py README.md CHANGES.md MANIFEST.in /opt/letsencrypt/src/
 
 # all above files are necessary for setup.py, however, package source
 # code directory has to be copied separately to a subdirectory...
