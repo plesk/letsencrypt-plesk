@@ -15,9 +15,7 @@ else
   exit 1
 fi
 
-# "git-core" seems to be an alias for "git" in CentOS 7 (yum search fails)
 $tool install -y \
-  git-core \
   python \
   python-devel \
   python-virtualenv \
