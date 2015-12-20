@@ -59,6 +59,10 @@ class PleskConfiguratorTest(unittest.TestCase):
         self.assertRaises(errors.NotSupportedError,
                           self.configurator.view_config_changes)
 
+    def test_rollback_checkpoints(self):
+        self.assertRaises(errors.NotSupportedError,
+                          self.configurator.rollback_checkpoints, 1)
+
     def test_get_all_certs_keys(self):
         self.assertEqual([], self.configurator.get_all_certs_keys())
 
@@ -84,18 +88,19 @@ class PleskConfiguratorTest(unittest.TestCase):
         achall.domain = domain
         return achall
 
-    def test_deploy_cert(self):
-        self.configurator.deploy_cert('example.com',
-                                      self._mock_file('test.crt'),
-                                      self._mock_file('test.key'))
-        with open(self._mock_file('test.crt')) as cert_file:
-            self.assertEqual(
-                cert_file.read(),
-                self.configurator.plesk_deployers['example.com'].cert_data)
-        with open(self._mock_file('test.key')) as key_file:
-            self.assertEqual(
-                key_file.read(),
-                self.configurator.plesk_deployers['example.com'].key_data)
+    @mock.patch('letsencrypt_plesk.deployer.PleskDeployer')
+    def test_deploy_cert(self, unused_mock_deployer):
+        cert_file = self._mock_file('test.crt')
+        with open(cert_file) as fd:
+            cert_data = fd.read()
+        key_file = self._mock_file('test.key')
+        with open(key_file) as fd:
+            key_data = fd.read()
+
+        self.configurator.deploy_cert('example.com', cert_file, key_file)
+        self.assertTrue('example.com' in self.configurator.plesk_deployers)
+        deployer = self.configurator.plesk_deployers['example.com']
+        deployer.init_cert.assert_called_with(cert_data, key_data, None)
 
     def test_deploy_cert_www(self):
         self.configurator.deploy_cert('www.example.com',
@@ -109,6 +114,29 @@ class PleskConfiguratorTest(unittest.TestCase):
                                       self._mock_file('test.key'))
         self.assertTrue('example.com' in self.configurator.plesk_deployers)
         self.assertFalse('www.example.com' in self.configurator.plesk_deployers)
+
+    def test_save(self):
+        mock_deployer = mock.MagicMock()
+        self.configurator.config.plesk_secure_panel = True
+        self.configurator.plesk_deployers = {'example.com': mock_deployer}
+        self.configurator.save()
+        mock_deployer.save.assert_called_once_with(secure_plesk=True)
+
+    def test_save_temporary(self):
+        mock_deployer = mock.MagicMock()
+        self.configurator.plesk_deployers = {'example.com': mock_deployer}
+        self.configurator.save(temporary=True)
+        mock_deployer.save.assert_not_called()
+
+    def test_recovery_routine(self):
+        mock_deployer = mock.MagicMock()
+        self.configurator.plesk_deployers = {'example.com': mock_deployer}
+        self.configurator.recovery_routine()
+        mock_deployer.revert.assert_called_once_with()
+
+    def test_restart(self):
+        self.configurator.restart()
+        self.configurator.plesk_api_client.cleanup.assert_called_once_with()
 
     @staticmethod
     def _mock_file(name):

@@ -29,6 +29,8 @@ class PleskConfigurator(common.Plugin):
     def add_parser_arguments(cls, add):
         add("secret-key", default=os.getenv('LE_PLESK_SECRET_KEY'),
             help="Plesk API-RPC authentication secret key.")
+        add("secure-panel", action="store_true",
+            help="Use the certificate to secure connections to Plesk.")
 
     def __init__(self, *args, **kwargs):
         """Initialize Plesk Configurator."""
@@ -160,21 +162,18 @@ class PleskConfigurator(common.Plugin):
         plesk_deployer.init_cert(cert_data, key_data, chain_data)
         self.plesk_deployers[domain] = plesk_deployer
 
-    def save(self, unused_title=None, unused_temporary=False):
+    def save(self, unused_title=None, temporary=False):
         """Push Plesk to deploy certificate."""
+        if temporary:
+            return
         for domain in self.plesk_deployers:
-            plesk_deployer = self.plesk_deployers[domain]
-            if not plesk_deployer.cert_installed:
-                if plesk_deployer.cert_name() in plesk_deployer.get_certs():
-                    plesk_deployer.remove_cert()
-                plesk_deployer.install_cert()
-            if not plesk_deployer.cert_assigned:
-                plesk_deployer.assign_cert()
+            self.plesk_deployers[domain].save(
+                secure_plesk=self.conf('secure-panel'))
 
-    def rollback_checkpoints(self, unused_rollback=1):
+    @staticmethod
+    def rollback_checkpoints(unused_rollback=1):
         """Revert deployer state to the previous."""
-        for domain in self.plesk_deployers:
-            self.plesk_deployers[domain].revert()
+        raise errors.NotSupportedError()
 
     def recovery_routine(self):
         """Revert deployer changes."""

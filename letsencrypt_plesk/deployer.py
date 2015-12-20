@@ -1,5 +1,7 @@
 """PleskDeployer"""
 import logging
+import os
+from tempfile import mkstemp
 
 from letsencrypt import errors
 
@@ -13,8 +15,8 @@ class PleskDeployer(object):
         """Initialize Plesk Certificate Deployer"""
         self.plesk_api_client = plesk_api_client
         self.domain = domain
-        self.cert_data = self.key_data = self.chain_data = None
-        self.cert_installed = self.cert_assigned = False
+        self.data = {'cert': None, 'key': None, 'chain': None}
+        self.cert_installed = self.cert_assigned = self.plesk_secured = False
 
     def cert_name(self):
         """Return name of the domain certificate in Plesk."""
@@ -41,9 +43,13 @@ class PleskDeployer(object):
 
     def init_cert(self, cert_data, key_data, chain_data=None):
         """Initialize certificate data."""
-        self.cert_data = cert_data
-        self.key_data = key_data
-        self.chain_data = chain_data if chain_data else {}
+        self.data = {'cert': cert_data, 'key': key_data, 'chain': chain_data}
+
+    def _get_full_cert_data(self):
+        return "{key}\n{cert}\n{chain}".format(
+            key=self.data['key'],
+            cert=self.data['cert'],
+            chain=self.data['chain'] if self.data['chain'] else "")
 
     def install_cert(self):
         """Install certificate to the domain repository in Plesk."""
@@ -54,9 +60,9 @@ class PleskDeployer(object):
                     {'site': self.domain},
                     {'content': [
                         {'csr': {}},
-                        {'pvt': self.key_data},
-                        {'cert': self.cert_data},
-                        {'ca': self.chain_data},
+                        {'pvt': self.data['key']},
+                        {'cert': self.data['cert']},
+                        {'ca': self.data['chain'] if self.data['chain'] else {}},
                     ]}
                 ]
             }
@@ -117,3 +123,29 @@ class PleskDeployer(object):
             self.remove_cert()
             self.cert_installed = False
         self.cert_assigned = False
+        self.plesk_secured = False
+
+    def save(self, secure_plesk=False):
+        """Provision changes in Plesk."""
+        if not self.cert_installed:
+            if self.cert_name() in self.get_certs():
+                self.remove_cert()
+            self.install_cert()
+        if not self.cert_assigned:
+            self.assign_cert()
+        if secure_plesk and not self.plesk_secured:
+            self.secure_plesk()
+
+    def secure_plesk(self):
+        """Use the certificate to secure connections to Plesk."""
+        fh, cert_tmp = mkstemp()
+        with os.fdopen(fh, 'w') as tmp_file:
+            tmp_file.write(self._get_full_cert_data())
+
+        try:
+            self.plesk_api_client.execute(
+                os.path.join(self.plesk_api_client.BIN_PATH, "certmng"),
+                ["--setup-cp-certificate", "--certificate=%s" % cert_tmp])
+        finally:
+            os.unlink(cert_tmp)
+        self.plesk_secured = True
