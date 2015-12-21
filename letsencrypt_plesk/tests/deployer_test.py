@@ -101,14 +101,62 @@ class PleskDeployerTest(unittest.TestCase):
         self.assertRaises(errors.PluginError, self.deployer.remove_cert)
         self.deployer.plesk_api_client.assert_called()
 
+    def _mock_api_methods(self):
+        self.deployer.get_certs = mock.MagicMock()
+        self.deployer.remove_cert = mock.MagicMock()
+        self.deployer.install_cert = mock.MagicMock()
+        self.deployer.assign_cert = mock.MagicMock()
+        self.deployer.secure_plesk = mock.MagicMock()
+
     def test_revert(self):
+        self._mock_api_methods()
         self.deployer.cert_installed = True
         self.deployer.cert_assigned = True
-        self.deployer.remove_cert = mock.MagicMock()
+
         self.deployer.revert()
         self.deployer.remove_cert.assert_called_once_with()
         self.assertFalse(self.deployer.cert_installed)
         self.assertFalse(self.deployer.cert_assigned)
+
+    def test_save(self):
+        self._mock_api_methods()
+        self.deployer.cert_installed = False
+        self.deployer.cert_assigned = False
+        self.deployer.plesk_secured = False
+
+        self.deployer.save(secure_plesk=True)
+        self.deployer.remove_cert.assert_not_called()
+        self.deployer.install_cert.assert_called_once_with()
+        self.deployer.assign_cert.assert_called_once_with()
+        self.deployer.secure_plesk.assert_called_once_with()
+
+    def test_save_redundant(self):
+        self._mock_api_methods()
+        self.deployer.cert_installed = True
+        self.deployer.cert_assigned = True
+        self.deployer.plesk_secured = True
+
+        self.deployer.save(secure_plesk=True)
+        self.deployer.remove_cert.assert_not_called()
+        self.deployer.install_cert.assert_not_called()
+        self.deployer.assign_cert.assert_not_called()
+        self.deployer.secure_plesk.assert_not_called()
+
+    def test_save_renew(self):
+        self._mock_api_methods()
+        self.deployer.cert_installed = False
+        self.deployer.cert_name = mock.MagicMock(return_value='test')
+        self.deployer.get_certs = mock.MagicMock(return_value=['test'])
+
+        self.deployer.save()
+        self.deployer.remove_cert.assert_called_once_with()
+        self.deployer.install_cert.assert_called_once_with()
+
+    def test_secure_plesk(self):
+        self.deployer.plesk_api_client.BIN_PATH = '/path/to/bin'
+        self.deployer.secure_plesk()
+        self.deployer.plesk_api_client.execute.assert_called_once_with(
+            '/path/to/bin/certmng', ['--setup-cp-certificate', mock.ANY])
 
 if __name__ == "__main__":
     unittest.main()  # pragma: no cover

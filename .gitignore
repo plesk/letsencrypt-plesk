@@ -3,6 +3,7 @@
 .eggs/
 build/
 dist*/
+wheelhouse/
 /venv*/
 /kgs/
 /.tox/

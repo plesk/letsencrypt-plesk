@@ -6,13 +6,10 @@ import os
 from letsencrypt_plesk import api_client
 
 
-class PleskApiMock(object):
+class PleskApiMock(mock.MagicMock):
     """Class helper for mock PleskApiClient"""
 
-    def __init__(self):
-        self.request = mock.MagicMock()
-        self.check_version = mock.MagicMock()
-        self._request = None
+    _request = None
 
     def expects_request(self, request):
         """Register a new expectation of the request"""
