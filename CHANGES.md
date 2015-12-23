@@ -5,6 +5,14 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Extension 1.2-1
+* Ability to use the certificate for Plesk (issue #11)
+* Bugfix: Duplicate renew tasks if the original was changed
+* Add note about monthly certificate renewal
+
+## Plugin 0.1.1
+* Ability to use the certificate for Plesk: `--letsencrypt-plesk:plesk-secure-panel` (issue #11)
+ 
 ## Extension 1.1-1
 * Ability to include www.domain.tld as an alternative domain name (issue #4)
 * Save the previously used e-mail address (issue #17)
