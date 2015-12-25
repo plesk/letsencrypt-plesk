@@ -4,6 +4,7 @@ import os
 import subprocess
 import requests
 import logging
+from tempfile import mkstemp
 
 from letsencrypt import errors
 from xml.dom.minidom import Document, parseString
@@ -63,14 +64,10 @@ class PleskApiClient(object):
         """Retrieve secret key for Plesk API or creates a new one"""
         if self.secret_key:
             return self.secret_key
-        with os.tmpfile() as key_tmp:
-            self.execute(os.path.join(self.CLI_PATH, "secret_key"),
-                         ["--create",
-                          "-ip-address", "127.0.0.1",
-                          "-description", __name__],
-                         stdout=key_tmp)
-            key_tmp.seek(0)
-            self.secret_key = key_tmp.read()
+        self.secret_key = self.execute(
+            os.path.join(self.CLI_PATH, "secret_key"),
+            ["--create", "-ip-address", "127.0.0.1", "-description", __name__],
+            stdout=True)
         self.secret_key_created = True
         return self.secret_key
 
@@ -87,23 +84,28 @@ class PleskApiClient(object):
             self.secret_key_created = False
 
     @staticmethod
-    def execute(command, arguments=None, stdin=None, stdout=None,
-                environment=None):
+    def execute(command, arguments=None, stdout=False):
         """Execute CLI utility"""
-        for name, value in (environment or {}).items():
-            os.environ[name] = value
-
         process_args = [command] + (arguments or [])
         logger.debug("Plesk exec: %s", " ".join(process_args))
-        try:
-            subprocess.check_call(process_args, stdin=stdin, stdout=stdout)
-        except subprocess.CalledProcessError as e:
-            raise PleskApiException(e)
 
-    def filemng(self, args):
-        """File operations in Plesk are implemented in filemng util"""
-        # TODO replace with ftp client
-        self.execute(os.path.join(self.BIN_PATH, "filemng"), args)
+        def _execute(**kwargs):
+            try:
+                subprocess.check_call(**kwargs)
+            except subprocess.CalledProcessError as e:
+                raise PleskApiException(e)
+
+        if stdout:
+            fh, out_tmp = mkstemp()
+            try:
+                with os.fdopen(fh, 'r+') as fd_out:
+                    _execute(args=process_args, stdout=fd_out)
+                    fd_out.seek(0)
+                    return fd_out.read()
+            finally:
+                os.unlink(out_tmp)
+        else:
+            _execute(args=process_args)
 
 
 class PleskApiException(errors.PluginError):

@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<packet>
+    <site>
+        <get>
+            <filter>
+                <name>example.com</name>
+            </filter>
+            <dataset>
+                <hosting/>
+            </dataset>
+        </get>
+    </site>
+</packet>
