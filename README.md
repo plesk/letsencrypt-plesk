@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/plesk/letsencrypt-plesk.svg?branch=master)](https://travis-ci.org/plesk/letsencrypt-plesk)
+[![Coverage Status](https://coveralls.io/repos/plesk/letsencrypt-plesk/badge.svg?branch=master&service=github)](https://coveralls.io/github/plesk/letsencrypt-plesk?branch=master)
 
 # Plesk plugin for Let's Encrypt client
 
