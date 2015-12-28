@@ -8,6 +8,10 @@ import logging
 from letsencrypt import errors
 from xml.dom.minidom import Document, parseString
 
+try:
+    requests.packages.urllib3.disable_warnings()
+except ImportError: pass
+
 logger = logging.getLogger(__name__)
 
 
