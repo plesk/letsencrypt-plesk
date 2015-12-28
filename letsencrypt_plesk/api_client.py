@@ -34,7 +34,8 @@ class PleskApiClient(object):
             raise errors.NoInstallationError('Plesk is not installed')
         with open(version, 'r') as f:
             version_data = f.read()
-            if not version_data.startswith('12.'):
+            major, _ = version_data.split('.', 1)
+            if int(major) < 12:
                 raise errors.NotSupportedError(
                     'Plesk version is not supported: %s' % version_data)
 
