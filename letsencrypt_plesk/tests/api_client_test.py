@@ -15,6 +15,32 @@ class PleskApiClientTest(unittest.TestCase):
         super(PleskApiClientTest, self).setUp()
         self.plesk_api_client = api_client.PleskApiClient()
 
+    def test_ssl_port_found(self):
+        plesk_api_client = api_client.PleskApiClient(
+            configfile=os.path.join(self.TEST_DATA_PATH,
+                                    'conf/plesk.ssl.conf.txt'))
+        self.assertEqual(plesk_api_client.port, 1234)
+        self.assertEqual(plesk_api_client.scheme, 'https')
+
+    def test_non_ssl_port_found(self):
+        plesk_api_client = api_client.PleskApiClient(
+            configfile=os.path.join(self.TEST_DATA_PATH,
+                                    'conf/plesk.conf.txt'))
+        self.assertEqual(plesk_api_client.port, 5678)
+        self.assertEqual(plesk_api_client.scheme, 'http')
+
+    def test_no_config_found(self):
+        plesk_api_client = api_client.PleskApiClient(
+            configfile=os.path.join(self.TEST_DATA_PATH,
+                                    'conf/plesk.empty.conf.txt'))
+        self.assertEqual(plesk_api_client.port, 8443)
+
+    def test_no_config_file_found_leads_to_default_port(self):
+        plesk_api_client = api_client.PleskApiClient(
+            configfile=os.path.join(self.TEST_DATA_PATH,
+                                    'conf/nonExisting'))
+        self.assertEqual(plesk_api_client.port, 8443)
+
     def test_check_version_supported(self):
         self.plesk_api_client.PSA_PATH = os.path.join(
             self.TEST_DATA_PATH, 'psa')
@@ -43,6 +69,7 @@ class PleskApiClientTest(unittest.TestCase):
             self.TEST_DATA_PATH, 'psa', 'bin')
         self.assertEqual('3c4941c1-890b-5690-0c44f037ed1c',
                          self.plesk_api_client.get_secret_key())
+
 
 if __name__ == "__main__":
     unittest.main()  # pragma: no cover
