@@ -10,7 +10,8 @@ from xml.dom.minidom import Document, parseString
 
 try:
     requests.packages.urllib3.disable_warnings()
-except ImportError: pass
+except ImportError:  # pragma: no cover
+    pass
 
 logger = logging.getLogger(__name__)
 
