@@ -15,6 +15,31 @@ class PleskApiClientTest(unittest.TestCase):
         super(PleskApiClientTest, self).setUp()
         self.plesk_api_client = api_client.PleskApiClient()
 
+    def test_ssl_port_found(self):
+        uri = self.plesk_api_client.get_api_uri(
+            os.path.join(self.TEST_DATA_PATH, 'conf/plesk.ssl.conf.txt'))
+        self.assertEqual(uri, "https://127.0.0.1:1234/enterprise/control/agent.php")
+
+    def test_ssl_port_priority(self):
+        uri = self.plesk_api_client.get_api_uri(
+            os.path.join(self.TEST_DATA_PATH, 'conf/plesk.ssl-priority.conf.txt'))
+        self.assertEqual(uri, "https://127.0.0.1:1234/enterprise/control/agent.php")
+
+    def test_non_ssl_port_found(self):
+        uri = self.plesk_api_client.get_api_uri(
+            os.path.join(self.TEST_DATA_PATH, 'conf/plesk.conf.txt'))
+        self.assertEqual(uri, "http://127.0.0.1:5678/enterprise/control/agent.php")
+
+    def test_no_config_found(self):
+        uri = self.plesk_api_client.get_api_uri(
+            os.path.join(self.TEST_DATA_PATH, 'conf/plesk.empty.conf.txt'))
+        self.assertEqual(uri, "https://127.0.0.1:8443/enterprise/control/agent.php")
+
+    def test_no_config_file_found_leads_to_default_port(self):
+        uri = self.plesk_api_client.get_api_uri(
+            os.path.join(self.TEST_DATA_PATH, 'conf/plesk.non-existing.conf.txt'))
+        self.assertEqual(uri, "https://127.0.0.1:8443/enterprise/control/agent.php")
+
     def test_check_version_supported(self):
         self.plesk_api_client.PSA_PATH = os.path.join(
             self.TEST_DATA_PATH, 'psa')
@@ -43,6 +68,7 @@ class PleskApiClientTest(unittest.TestCase):
             self.TEST_DATA_PATH, 'psa', 'bin')
         self.assertEqual('3c4941c1-890b-5690-0c44f037ed1c',
                          self.plesk_api_client.get_secret_key())
+
 
 if __name__ == "__main__":
     unittest.main()  # pragma: no cover

@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import re
 import requests
 import logging
 from tempfile import mkstemp
@@ -19,12 +20,39 @@ class PleskApiClient(object):
     CLI_PATH = os.path.join(PSA_PATH, "bin")
     BIN_PATH = os.path.join(PSA_PATH, "admin", "bin")
 
-    def __init__(self, host='127.0.0.1', port=8443, secret_key=None):
-        self.host = host
-        self.port = port
-        self.scheme = 'https' if port == 8443 else 'http'
+    def __init__(self, scheme=None, host='127.0.0.1', port=None, secret_key=None):
+        self.uri = {'scheme': scheme, 'host': host, 'port': port}
         self.secret_key_created = False
         self.secret_key = secret_key
+
+    def get_api_uri(self, config='/etc/sw-cp-server/conf.d/plesk.conf'):
+        """Plesk API-RPC entry point URI"""
+        if os.path.exists(config):
+            with open(config, 'r') as config_file:
+                config_list = config_file.readlines()
+            if self.uri['scheme'] is None or self.uri['port'] is None:
+                for line in config_list:
+                    ssl_port_match_pattern = '(\\s*)(listen\\s)(\\b\\d{2,5}\\b)(\\sssl)'
+                    ssl_matches = re.match(ssl_port_match_pattern, line)
+                    if ssl_matches:
+                        self.uri['port'] = int(ssl_matches.group(3))
+                        self.uri['scheme'] = 'https'
+                        break
+            if self.uri['scheme'] is None or self.uri['port'] is None:
+                for line in config_list:
+                    non_ssl_port_match_pattern = '(\\s*)(listen\\s)(\\b\\d{2,5}\\b)(;)'
+                    non_ssl_matches = re.match(non_ssl_port_match_pattern, line)
+                    if non_ssl_matches:
+                        self.uri['port'] = int(non_ssl_matches.group(3))
+                        self.uri['scheme'] = 'http'
+                        break
+
+        if not self.uri['scheme']:
+            self.uri['scheme'] = 'https'
+        if not self.uri['port']:
+            self.uri['port'] = 8443
+
+        return '%(scheme)s://%(host)s:%(port)d/enterprise/control/agent.php' % self.uri
 
     def check_version(self):
         """Check Plesk installed and version is supported"""
@@ -50,14 +78,7 @@ class PleskApiClient(object):
             'HTTP_PRETTY_PRINT': 'TRUE',
             'KEY': self.get_secret_key(),
         }
-        response = requests.post(
-            "{scheme}://{host}:{port}/enterprise/control/agent.php".format(
-                scheme=self.scheme,
-                host=self.host,
-                port=self.port),
-            verify=False,
-            headers=headers,
-            data=request)
+        response = requests.post(self.get_api_uri(), data=request, headers=headers, verify=False)
         logger.debug("Plesk API-RPC response: %s", response.text)
         return XmlToDict(response.text.encode('utf-8'))
 
