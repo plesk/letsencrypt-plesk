@@ -51,6 +51,11 @@ class PleskChallenge(object):
             x['value'] for x in hosting_props if 'ftp_login' == x['name'])
 
         self.verify_path = os.path.join(self.www_root, file_path)
+
+        if self._exists(os.path.join(self.www_root, ".htaccess")):
+            htaccess_path = os.path.join(self.verify_path, ".htaccess")
+            self._create_file(htaccess_path, self._get_htaccess())
+
         full_path = os.path.join(self.verify_path, file_name)
         self._create_file(full_path, content)
 
@@ -59,22 +64,24 @@ class PleskChallenge(object):
         try:
             if self.www_root and self.ftp_login:
                 file_name = achall.chall.encode("token")
+
+                htaccess_path = os.path.join(self.verify_path, ".htaccess")
+                self._remove_file(htaccess_path)
+
                 full_path = os.path.join(self.verify_path, file_name)
                 self._remove_file(full_path)
         except api_client.PleskApiException as e:
             logger.debug(str(e))
 
     def _remove_file(self, full_path):
-        if os.path.exists(full_path):
-            self.plesk_api_client.filemng(
-                [self.ftp_login, "rm", full_path])
+        if self._exists(full_path):
+            self._filemng("rm", full_path)
 
         while self._is_sub_path(self.verify_path, self.www_root):
-            if os.path.exists(self.verify_path):
-                if len(os.listdir(self.verify_path)) > 0:
+            if self._exists(self.verify_path):
+                if len(self._ls(self.verify_path)) > 0:
                     break
-                self.plesk_api_client.filemng(
-                    [self.ftp_login, "rmdir", self.verify_path])
+                self._filemng("rmdir", self.verify_path)
             self.verify_path = os.path.dirname(self.verify_path)
 
     @staticmethod
@@ -84,15 +91,47 @@ class PleskChallenge(object):
         common = os.path.commonprefix([child, parent])
         return common == parent and not child == parent
 
+    def _ls(self, path):
+        ls_data = []
+        ls_out = self._filemng("list", "both", path, stdout=True)
+        for entry in ls_out.splitlines():
+            name = entry.split(None, 1)[0]
+            if name not in ['', '.', '..']:
+                ls_data.append(name)
+        return ls_data
+
+    def _exists(self, path):
+        return "0" == self._filemng("file_exists", path, stdout=True).strip()
+
     def _create_file(self, full_path, content):
         fh, tmp_path = mkstemp()
         with os.fdopen(fh, 'w') as tmp_file:
             tmp_file.write(str(content))
         try:
-            if not os.path.exists(self.verify_path):
-                self.plesk_api_client.filemng(
-                    [self.ftp_login, "mkdir", self.verify_path, "-p"])
-            self.plesk_api_client.filemng(
-                [self.ftp_login, "cp2perm", tmp_path, full_path, "0644"])
+            if not self._exists(self.verify_path):
+                self._filemng("mkdir", "-p", self.verify_path)
+
+            self._filemng("cp2perm", tmp_path, full_path, "0644")
         finally:
             os.unlink(tmp_path)
+
+    def _filemng(self, *args, **kwargs):
+        """File operations in Plesk are implemented in filemng util"""
+        if 'user' in kwargs:
+            arguments = [kwargs['user']]
+            del kwargs['user']
+        else:
+            arguments = [self.ftp_login]
+        arguments += list(args)
+        return self.plesk_api_client.execute(
+            os.path.join(self.plesk_api_client.BIN_PATH, "filemng"),
+            arguments=arguments, **kwargs)
+
+    @staticmethod
+    def _get_htaccess():
+        """Content of .htaccess file"""
+        return """Satisfy any
+<IfModule mod_rewrite.c>
+    RewriteEngine off
+</IfModule>
+"""
