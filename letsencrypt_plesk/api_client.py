@@ -10,6 +10,11 @@ from tempfile import mkstemp
 from letsencrypt import errors
 from xml.dom.minidom import Document, parseString
 
+try:
+    requests.packages.urllib3.disable_warnings()
+except ImportError:  # pragma: no cover
+    pass
+
 logger = logging.getLogger(__name__)
 
 
