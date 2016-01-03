@@ -5,6 +5,11 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Plugin 0.1.2
+* Disable rewrite rules and satisfy authentication (with `.htaccess` file) in challenges directory (issues #13 and #16)
+* ExpatError in case Plesk port 8443 is customized (issue #30). Thanks to @MatrixCrawler
+* Disable HTTPS warnings: localhost is always trusted
+
 ## Extension 1.2-1
 * Ability to use the certificate for Plesk (issue #11)
 * Bugfix: Duplicate renew tasks if the original was changed
