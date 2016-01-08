@@ -1,7 +1,7 @@
 #!/bin/sh -xe
 # Release dev packages to PyPI
 
-version="0.1.0.dev$(date +%Y%m%d)"
+version="0.1.2.dev$(date +%Y%m%d)"
 DEV_RELEASE_BRANCH="dev-release"
 RELEASE_GPG_KEY="${RELEASE_GPG_KEY:-9B3AF83D}"
 
@@ -12,7 +12,7 @@ tag="v$version"
 mv "dist.$version" "dist.$version.$(date +%s).bak" || true
 git tag --delete "$tag" || true
 
-tmpvenv=$(mktemp -d)
+tmpvenv=$(mktemp -d -t venv.XXX)
 virtualenv --no-site-packages $tmpvenv
 . $tmpvenv/bin/activate
 # update setuptools/pip just like in other places in the repo
@@ -32,7 +32,7 @@ cd $root
 git branch -f "$DEV_RELEASE_BRANCH"
 git checkout "$DEV_RELEASE_BRANCH"
 
-sed -i "s/^__version.*/__version__ = '$version'/" letsencrypt_plesk/__init__.py
+sed -i "" "s/^__version.*/__version__ = '$version'/" letsencrypt_plesk/__init__.py
 
 git add -p  # interactive user input
 git commit --gpg-sign="$RELEASE_GPG_KEY" -m "Release $version"
@@ -85,7 +85,7 @@ nosetests letsencrypt_plesk
 echo "New root: $root"
 echo "KGS is at $root/kgs"
 echo "In order to upload packages run the following command:"
-echo twine upload "$root/dist.$version/*/*"
+echo "twine upload '$root/dist.$version/*/*' -r pypitest"
 echo "git remote remove tmp || true"
 echo "git remote add tmp $root"
 echo "git fetch tmp"
