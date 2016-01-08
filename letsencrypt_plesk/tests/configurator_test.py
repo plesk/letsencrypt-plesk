@@ -11,6 +11,7 @@ from acme import challenges
 
 
 class PleskConfiguratorTest(unittest.TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         super(PleskConfiguratorTest, self).setUp()
         self.configurator = configurator.PleskConfigurator(
@@ -18,6 +19,21 @@ class PleskConfiguratorTest(unittest.TestCase):
             name="plesk")
         self.configurator.plesk_api_client = api_mock.PleskApiMock()
         self.configurator.prepare()
+
+    def test_add_parser_arguments(self):
+        add = mock.MagicMock()
+        configurator.PleskConfigurator.add_parser_arguments(add)
+        self.assertTrue(0 < add.call_count)
+
+    @mock.patch('letsencrypt_plesk.api_client.PleskApiClient')
+    def test_prepare(self, plesk_api_client):
+        configurator.PleskConfigurator(
+            config=mock.MagicMock(plesk_secret_key='test-key'),
+            name="plesk").prepare()
+        plesk_api_client.assert_called_once_with(secret_key='test-key')
+
+    def test_more_info(self):
+        self.assertTrue(self.configurator.more_info())
 
     def test_get_all_names_none(self):
         self.configurator.plesk_api_client.expects_request(
@@ -72,15 +88,22 @@ class PleskConfiguratorTest(unittest.TestCase):
 
     @mock.patch('letsencrypt_plesk.challenge.PleskChallenge')
     def test_perform(self, challenge_mock):
-        challenge_mock().perform = mock.MagicMock()
-        achalls = [
-            self._mock_achall('example.com'),
-            self._mock_achall('www.example.com'),
-        ]
+        challenge_mock.perform = mock.MagicMock()
+        achalls = [self._mock_achall('example.com'), self._mock_achall('www.example.com')]
         responses = self.configurator.perform(achalls)
         self.assertEqual(len(achalls), len(responses))
         challenge = self.configurator.plesk_challenges['example.com']
         challenge.perform.assert_has_calls([mock.call(a) for a in achalls])
+
+    def test_cleanup(self):
+        achalls = [self._mock_achall('example.com'), self._mock_achall('www.example.com')]
+        self.configurator.plesk_challenges = {'example.com': mock.MagicMock(),
+                                              'www.example.com': mock.MagicMock()}
+        self.configurator.cleanup(achalls)
+        self.configurator.plesk_api_client.cleanup.assert_called_once_with()
+        self.configurator.plesk_challenges['example.com'].cleanup.assert_has_calls(
+            [mock.call(a) for a in achalls])
+        self.configurator.plesk_challenges['www.example.com'].cleanup.assert_not_called()
 
     @staticmethod
     def _mock_achall(domain):
@@ -96,11 +119,15 @@ class PleskConfiguratorTest(unittest.TestCase):
         key_file = self._mock_file('test.key')
         with open(key_file) as fd:
             key_data = fd.read()
+        chain_file = self._mock_file('ca.crt')
+        with open(chain_file) as fd:
+            chain_data = fd.read()
+        full_file = self._mock_file('full.crt')
 
-        self.configurator.deploy_cert('example.com', cert_file, key_file)
+        self.configurator.deploy_cert('example.com', cert_file, key_file, chain_file, full_file)
         self.assertTrue('example.com' in self.configurator.plesk_deployers)
         deployer = self.configurator.plesk_deployers['example.com']
-        deployer.init_cert.assert_called_with(cert_data, key_data, None)
+        deployer.init_cert.assert_called_with(cert_data, key_data, chain_data)
 
     def test_deploy_cert_www(self):
         self.configurator.deploy_cert('www.example.com',
