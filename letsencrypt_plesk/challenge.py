@@ -19,22 +19,28 @@ class PleskChallenge(object):
         self.www_root = None
         self.ftp_login = None
         self.verify_path = None
-        self.full_path = None
 
     def perform(self, achall):
         """Perform a challenge on Plesk."""
         response, validation = achall.response_and_validation()
-        self._put_validation_file(
-            domain=self.domain,
-            file_path=achall.URI_ROOT_PATH,
-            file_name=achall.chall.encode("token"),
-            content=validation.encode())
+        if not self.www_root or not self.ftp_login:
+            self._init_domain_props()
+
+        self.verify_path = os.path.join(self.www_root, achall.URI_ROOT_PATH)
+
+        if self._exists(os.path.join(self.www_root, ".htaccess")):
+            htaccess_path = os.path.join(self.verify_path, ".htaccess")
+            self._create_file(htaccess_path, self._get_htaccess())
+
+        full_path = os.path.join(self.verify_path, achall.chall.encode("token"))
+        self._create_file(full_path, validation.encode())
+
         return response
 
-    def _put_validation_file(self, domain, file_path, file_name, content):
+    def _init_domain_props(self):
         """Put file to the domain with validation content"""
         request = {'packet': {'site': {'get': [
-            {'filter': {'name': domain}},
+            {'filter': {'name': self.domain}},
             {'dataset': {'hosting': {}}},
         ]}}}
         response = self.plesk_api_client.request(request)
@@ -49,15 +55,6 @@ class PleskChallenge(object):
             x['value'] for x in hosting_props if 'www_root' == x['name'])
         self.ftp_login = next(
             x['value'] for x in hosting_props if 'ftp_login' == x['name'])
-
-        self.verify_path = os.path.join(self.www_root, file_path)
-
-        if self._exists(os.path.join(self.www_root, ".htaccess")):
-            htaccess_path = os.path.join(self.verify_path, ".htaccess")
-            self._create_file(htaccess_path, self._get_htaccess())
-
-        full_path = os.path.join(self.verify_path, file_name)
-        self._create_file(full_path, content)
 
     def cleanup(self, achall):
         """Remove validation file and directories."""
@@ -95,8 +92,10 @@ class PleskChallenge(object):
         ls_data = []
         ls_out = self._filemng("list", "both", path, stdout=True)
         for entry in ls_out.splitlines():
-            name = entry.split(None, 1)[0]
-            if name not in ['', '.', '..']:
+            if 0 == len(entry.strip()):
+                continue
+            name, _ = entry.split(None, 1)
+            if name not in ['.', '..']:
                 ls_data.append(name)
         return ls_data
 

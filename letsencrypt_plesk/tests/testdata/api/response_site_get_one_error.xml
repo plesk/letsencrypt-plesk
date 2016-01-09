@@ -1,0 +1,12 @@
+<packet version="1.6.7.0">
+    <site>
+        <get>
+            <result>
+                <status>error</status>
+                <errcode>1013</errcode>
+                <errtext>Site does not exist</errtext>
+                <filter-id>example.com</filter-id>
+            </result>
+        </get>
+    </site>
+</packet>
