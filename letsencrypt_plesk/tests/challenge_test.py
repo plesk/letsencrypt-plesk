@@ -77,6 +77,16 @@ class PleskChallengeTest(unittest.TestCase):
         self.assertRaises(errors.DvAuthError, self.challenge._init_domain_props)
         self.challenge.plesk_api_client.assert_called()
 
+    def test_init_domain_props_without_hosting(self):
+        # pylint: disable=protected-access
+        self.challenge.plesk_api_client.expects_request(
+            'request_site_get_one')
+        self.challenge.plesk_api_client.will_response(
+            'response_site_get_one_without_hosting')
+
+        self.assertRaises(errors.DvAuthError, self.challenge._init_domain_props)
+        self.challenge.plesk_api_client.assert_called()
+
     def test_filemng(self):
         # pylint: disable=protected-access
         plesk_api_mock = self.challenge.plesk_api_client
