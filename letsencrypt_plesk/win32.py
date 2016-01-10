@@ -2,8 +2,8 @@
 
 import os
 import sys
-from ctypes import *
-from ctypes.wintypes import *
+from ctypes import *  # pylint: disable=wildcard-import,unused-wildcard-import
+from ctypes.wintypes import *  # pylint: disable=wildcard-import,unused-wildcard-import
 from requests.packages.urllib3 import connection as urllib3_connection
 from requests.packages.urllib3 import util as urllib3_util
 
@@ -15,7 +15,7 @@ else:
     import winreg  # pylint: disable=import-error
 
 if not getattr(__builtins__, "WindowsError", None):
-    class WindowsError(OSError):
+    class WindowsError(OSError):  # pylint: disable=missing-docstring
         pass
 
 
@@ -37,14 +37,14 @@ def get_plesk_config(variable, default=None):
 
 
 def ssl_wrap_localhost_no_sni(*args, **kwargs):
-    if 'server_hostname' in kwargs and \
-       '127.0.0.1' == kwargs['server_hostname']:
-            orig_has_sni = urllib3_util.HAS_SNI
-            urllib3_util.HAS_SNI = False
-            try:
-                return urllib3_util.ssl_wrap_socket(*args, **kwargs)
-            finally:
-                urllib3_util.HAS_SNI = orig_has_sni
+    """Prevent SSLError: bad handshake on localhost requests."""
+    if 'server_hostname' in kwargs and '127.0.0.1' == kwargs['server_hostname']:
+        orig_has_sni = urllib3_util.HAS_SNI
+        urllib3_util.HAS_SNI = False
+        try:
+            return urllib3_util.ssl_wrap_socket(*args, **kwargs)
+        finally:
+            urllib3_util.HAS_SNI = orig_has_sni
     return orig_ssl_wrap(*args, **kwargs)
 orig_ssl_wrap = urllib3_connection.ssl_wrap_socket
 urllib3_connection.ssl_wrap_socket = ssl_wrap_localhost_no_sni
@@ -118,11 +118,11 @@ IO_REPARSE_TAG_SYMLINK = 0xA000000C
 MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 0x4000
 
 
-class GENERIC_REPARSE_BUFFER(Structure):
+class GENERIC_REPARSE_BUFFER(Structure):  # pylint: disable=missing-docstring
     _fields_ = (('DataBuffer', UCHAR * 1),)
 
 
-class SYMBOLIC_LINK_REPARSE_BUFFER(Structure):
+class SYMBOLIC_LINK_REPARSE_BUFFER(Structure):  # pylint: disable=missing-docstring
     _fields_ = (('SubstituteNameOffset', USHORT),
                 ('SubstituteNameLength', USHORT),
                 ('PrintNameOffset', USHORT),
@@ -131,13 +131,13 @@ class SYMBOLIC_LINK_REPARSE_BUFFER(Structure):
                 ('PathBuffer', WCHAR * 1))
 
     @property
-    def PrintName(self):
+    def PrintName(self):  # pylint: disable=missing-docstring
         arrayt = WCHAR * (self.PrintNameLength // 2)
         offset = type(self).PathBuffer.offset + self.PrintNameOffset
         return arrayt.from_address(addressof(self) + offset).value
 
 
-class MOUNT_POINT_REPARSE_BUFFER(Structure):
+class MOUNT_POINT_REPARSE_BUFFER(Structure):  # pylint: disable=missing-docstring
     _fields_ = (('SubstituteNameOffset', USHORT),
                 ('SubstituteNameLength', USHORT),
                 ('PrintNameOffset', USHORT),
@@ -145,14 +145,14 @@ class MOUNT_POINT_REPARSE_BUFFER(Structure):
                 ('PathBuffer', WCHAR * 1))
 
     @property
-    def PrintName(self):
+    def PrintName(self):  # pylint: disable=missing-docstring
         arrayt = WCHAR * (self.PrintNameLength // 2)
         offset = type(self).PathBuffer.offset + self.PrintNameOffset
         return arrayt.from_address(addressof(self) + offset).value
 
 
-class REPARSE_DATA_BUFFER(Structure):
-    class REPARSE_BUFFER(Union):
+class REPARSE_DATA_BUFFER(Structure):  # pylint: disable=missing-docstring
+    class REPARSE_BUFFER(Union):  # pylint: disable=missing-docstring
         _fields_ = (('SymbolicLinkReparseBuffer',
                      SYMBOLIC_LINK_REPARSE_BUFFER),
                     ('MountPointReparseBuffer',
@@ -167,6 +167,7 @@ class REPARSE_DATA_BUFFER(Structure):
 
 
 def os_islink(path):
+    """Check if path is symlink."""
     result = GetFileAttributesW(path)
     if result == INVALID_FILE_ATTRIBUTES:
         raise WinError()
@@ -174,6 +175,7 @@ def os_islink(path):
 
 
 def os_readlink(path):
+    """Return target path of the symlink."""
     reparse_point_handle = CreateFileW(path,
                                        0,
                                        0,
@@ -195,7 +197,7 @@ def os_readlink(path):
     CloseHandle(reparse_point_handle)
     if not io_result:
         raise WinError()
-    rdb = REPARSE_DATA_BUFFER.from_buffer(target_buffer)
+    rdb = REPARSE_DATA_BUFFER.from_buffer(target_buffer)  # pylint: disable=no-member
     if rdb.ReparseTag == IO_REPARSE_TAG_SYMLINK:
         return rdb.SymbolicLinkReparseBuffer.PrintName
     elif rdb.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT:
@@ -208,6 +210,7 @@ except ImportError:
 
 
 def os_realpath(fpath):
+    """Return full path resolving symlinks in the path specified."""
     while os_islink(fpath):
         rpath = os_readlink(fpath)
         if not os.path.isabs(rpath):
