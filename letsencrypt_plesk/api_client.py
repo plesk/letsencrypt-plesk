@@ -16,7 +16,7 @@ try:
 except ImportError:  # pragma: no cover
     pass
 
-if sys.platform == 'win32':
+if sys.platform == 'win32':  # pragma: no cover
     from letsencrypt_plesk import win32
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class PleskApiClient(object):
     """Class performs API-RPC requests to Plesk"""
 
-    if sys.platform == 'win32':
+    if sys.platform == 'win32':  # pragma: no cover
         PSA_PATH = win32.get_plesk_config("PRODUCT_ROOT_D",
                                           "C:\\Program Files (x86)\\Plesk\\")
     else:

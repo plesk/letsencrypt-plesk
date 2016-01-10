@@ -25,6 +25,19 @@ class PleskChallengeTest(unittest.TestCase):
             mock.call('/www/.well-known/.htaccess', mock.ANY),
             mock.call('/www/.well-known/abc', '123')])
 
+    @mock.patch('sys.platform', 'win32')
+    def test_perform_win32(self):
+        # pylint: disable=protected-access
+        self.challenge._init_domain_props = mock.MagicMock()
+        self.challenge._exists = mock.MagicMock(return_value=True)
+        self.challenge._create_file = mock.MagicMock()
+        self.challenge.www_root = 'C:/inetpub'
+        self.challenge.perform(self._mock_achall())
+        self.assertEqual(self.challenge.verify_path, 'C:/inetpub/.well-known')
+        self.challenge._create_file.assert_has_calls([
+            mock.call('C:/inetpub/.well-known/web.config', mock.ANY),
+            mock.call('C:/inetpub/.well-known/abc', '123')])
+
     def test_cleanup(self):
         # pylint: disable=protected-access
         self.challenge._remove_file = mock.MagicMock()
@@ -33,6 +46,7 @@ class PleskChallengeTest(unittest.TestCase):
         self.challenge.ftp_login = 'ftp_user'
         self.challenge.cleanup(self._mock_achall())
         self.challenge._remove_file.assert_has_calls([
+            mock.call('/www/.well-known/web.config'),
             mock.call('/www/.well-known/.htaccess'),
             mock.call('/www/.well-known/abc')])
 
@@ -171,6 +185,19 @@ index.html	1364580529	2241	root	root	644
         self.challenge._filemng.assert_has_calls([
             mock.call("mkdir", "-p", "/www/.well-known"),
             mock.call("cp2perm", mock.ANY, "/www/.well-known/abc", "0644")])
+
+    @mock.patch('sys.platform', 'win32')
+    def test_create_file_win32(self):
+        # pylint: disable=protected-access
+        self.challenge._filemng = mock.MagicMock(return_value='C:/tmp')
+        self.challenge._exists = mock.MagicMock(return_value=False)
+        self.challenge.verify_path = 'C:/inetpub/.well-known'
+        self.challenge._create_file('C:/inetpub/.well-known/abc', '123')
+        self.challenge._filemng.assert_has_calls([
+            mock.call("mkdir", "-p", "C:/inetpub/.well-known"),
+            mock.call("--temp-file", mock.ANY, stdout=True),
+            mock.call("cp", mock.ANY, 'C:/tmp', user="root"),
+            mock.call("cp", 'C:/tmp', "C:/inetpub/.well-known/abc")])
 
 if __name__ == "__main__":
     unittest.main()  # pragma: no cover
