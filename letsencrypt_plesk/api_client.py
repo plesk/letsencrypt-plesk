@@ -132,7 +132,8 @@ class PleskApiClient(object):
             finally:
                 os.unlink(out_tmp)
         else:
-            _execute(args=process_args)
+            with open(os.devnull, 'wb') as fd_null:
+                _execute(args=process_args, stdout=fd_null)
 
 
 class PleskApiException(errors.PluginError):
@@ -202,11 +203,11 @@ class XmlToDict(dict):  # pylint: disable=too-few-public-methods
         if 0 == len(data.strip()):
             return children
         elif isinstance(children, list):
-            return children + [data]
+            return children + [data]  # pragma: no cover
         elif isinstance(children, dict):
             return data
         else:
-            return [children, data]
+            return [children, data]  # pragma: no cover
 
     def _get_list_children(self, children, child):
         child_name = child.tagName
