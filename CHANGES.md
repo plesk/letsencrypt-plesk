@@ -5,6 +5,18 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Extension 1.3-1
+* Debian 6 is now supported
+* No more conflicts with alt-python-virtualenv on CloudLinux
+* Extension now ignores unsupported domains:
+  * Inactive (disabled/suspended) domains
+  * Wildcard subdomains
+  * Domains without web hosting
+  * IDN domains
+* Fixed PHP Warning: Invalid argument supplied for foreach
+* Users can now secure Plesk with www. prefix in hostname (issues #11)
+* Store CLI options for certificate renewal (issue #46)
+
 ## Plugin 0.1.2
 * Disable rewrite rules and satisfy authentication (with `.htaccess` file) in challenges directory (issues #13 and #16)
 * ExpatError in case Plesk port 8443 is customized (issue #30). Thanks to @MatrixCrawler
