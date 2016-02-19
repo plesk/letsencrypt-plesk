@@ -5,6 +5,9 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Extension 1.4-1
+* Fix certificates renew task broken in 1.3 (issue 77)
+
 ## Extension 1.3-1
 * Debian 6 is now supported
 * No more conflicts with alt-python-virtualenv on CloudLinux
@@ -14,7 +17,7 @@ The changelog contains both components under the corresponding titles.
   * Domains without web hosting
   * IDN domains
 * Fixed PHP Warning: Invalid argument supplied for foreach
-* Users can now secure Plesk with www. prefix in hostname (issues #11)
+* Users can now secure Plesk with www. prefix in hostname (issue #11)
 * Store CLI options for certificate renewal (issue #46)
 
 ## Plugin 0.1.2
