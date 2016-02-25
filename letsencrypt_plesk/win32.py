@@ -223,3 +223,13 @@ try:
     from os import realpath  # pylint: disable=unused-import
 except ImportError:
     os.realpath = os_realpath
+
+
+def os_replace(src, dst):
+    """Rename the file or directory src to dst.
+    If dst exists and is a file,
+    it will be replaced silently if the user has permission.
+    """
+    # MOVEFILE_REPLACE_EXISTING = 0x1; MOVEFILE_WRITE_THROUGH = 0x8
+    windll.kernel32.MoveFileExW(src, dst, 0x1)
+os.rename = os_replace
