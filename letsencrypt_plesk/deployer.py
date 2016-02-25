@@ -1,6 +1,7 @@
 """PleskDeployer"""
 import logging
 import os
+import sys
 from tempfile import mkstemp
 
 from letsencrypt import errors
@@ -142,10 +143,15 @@ class PleskDeployer(object):
         with os.fdopen(fh, 'w') as tmp_file:
             tmp_file.write(self._get_full_cert_data())
 
+        cert_cmd = os.path.join(self.plesk_api_client.BIN_PATH, "certmng")
+        cert_args = ["--setup-cp-certificate", "--certificate=%s" % cert_tmp]
+        if sys.platform == 'win32':
+            cert_cmd = os.path.join(
+                self.plesk_api_client.CLI_PATH, "extension.exe")
+            cert_args = ["--exec", "letsencrypt", "certmng.php"] + cert_args
+
         try:
-            self.plesk_api_client.execute(
-                os.path.join(self.plesk_api_client.BIN_PATH, "certmng"),
-                ["--setup-cp-certificate", "--certificate=%s" % cert_tmp])
+            self.plesk_api_client.execute(cert_cmd, cert_args)
         finally:
             os.unlink(cert_tmp)
         self.plesk_secured = True
