@@ -158,5 +158,14 @@ class PleskDeployerTest(unittest.TestCase):
         self.deployer.plesk_api_client.execute.assert_called_once_with(
             '/path/to/bin/certmng', ['--setup-cp-certificate', mock.ANY])
 
+    @mock.patch('sys.platform', 'win32')
+    def test_secure_plesk_win32(self):
+        self.deployer.plesk_api_client.CLI_PATH = '/path/to/cli'
+        self.deployer.secure_plesk()
+        self.deployer.plesk_api_client.execute.assert_called_once_with(
+            '/path/to/cli/extension.exe',
+            ['--exec', 'letsencrypt', 'certmng.php',
+             '--setup-cp-certificate', mock.ANY])
+
 if __name__ == "__main__":
     unittest.main()  # pragma: no cover

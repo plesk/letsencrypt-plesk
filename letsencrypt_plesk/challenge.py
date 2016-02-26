@@ -1,5 +1,6 @@
 """PleskChallenge"""
 import logging
+import sys
 import os
 from tempfile import mkstemp
 
@@ -28,7 +29,10 @@ class PleskChallenge(object):
 
         self.verify_path = os.path.join(self.www_root, achall.URI_ROOT_PATH)
 
-        if self._exists(os.path.join(self.www_root, ".htaccess")):
+        if sys.platform == 'win32':
+            web_config_path = os.path.join(self.verify_path, "web.config")
+            self._create_file(web_config_path, self._get_web_config())
+        elif self._exists(os.path.join(self.www_root, ".htaccess")):
             htaccess_path = os.path.join(self.verify_path, ".htaccess")
             self._create_file(htaccess_path, self._get_htaccess())
 
@@ -66,6 +70,9 @@ class PleskChallenge(object):
         try:
             if self.www_root and self.ftp_login:
                 file_name = achall.chall.encode("token")
+
+                web_config_path = os.path.join(self.verify_path, "web.config")
+                self._remove_file(web_config_path)
 
                 htaccess_path = os.path.join(self.verify_path, ".htaccess")
                 self._remove_file(htaccess_path)
@@ -115,7 +122,15 @@ class PleskChallenge(object):
             if not self._exists(self.verify_path):
                 self._filemng("mkdir", "-p", self.verify_path)
 
-            self._filemng("cp2perm", tmp_path, full_path, "0644")
+            if sys.platform == 'win32':
+                tmp_dir = os.path.join(self.plesk_api_client.PSA_PATH, "tmp")
+                tmp_source = self._filemng("--temp-file",
+                                           "--destination=" + tmp_dir,
+                                           stdout=True).strip()
+                self._filemng("cp", tmp_path, tmp_source, user="root")
+                self._filemng("cp", tmp_source, full_path)
+            else:
+                self._filemng("cp2perm", tmp_path, full_path, "0644")
         finally:
             os.unlink(tmp_path)
 
@@ -138,4 +153,17 @@ class PleskChallenge(object):
 <IfModule mod_rewrite.c>
     RewriteEngine off
 </IfModule>
+"""
+
+    @staticmethod
+    def _get_web_config():
+        """Content of web.config file"""
+        return """<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <system.webServer>
+        <staticContent>
+            <mimeMap fileExtension="." mimeType="text/plain" />
+        </staticContent>
+    </system.webServer>
+</configuration>
 """
