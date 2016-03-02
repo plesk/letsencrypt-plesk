@@ -16,7 +16,6 @@ class PleskChallengeTest(unittest.TestCase):
     def test_perform(self):
         # pylint: disable=protected-access
         self.challenge._init_domain_props = mock.MagicMock()
-        self.challenge._exists = mock.MagicMock(return_value=True)
         self.challenge._create_file = mock.MagicMock()
         self.challenge.www_root = '/www'
         self.challenge.perform(self._mock_achall())
@@ -29,7 +28,6 @@ class PleskChallengeTest(unittest.TestCase):
     def test_perform_win32(self):
         # pylint: disable=protected-access
         self.challenge._init_domain_props = mock.MagicMock()
-        self.challenge._exists = mock.MagicMock(return_value=True)
         self.challenge._create_file = mock.MagicMock()
         self.challenge.www_root = 'C:/inetpub'
         self.challenge.perform(self._mock_achall())

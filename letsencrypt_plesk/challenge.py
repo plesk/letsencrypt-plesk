@@ -32,7 +32,7 @@ class PleskChallenge(object):
         if sys.platform == 'win32':
             web_config_path = os.path.join(self.verify_path, "web.config")
             self._create_file(web_config_path, self._get_web_config())
-        elif self._exists(os.path.join(self.www_root, ".htaccess")):
+        else:
             htaccess_path = os.path.join(self.verify_path, ".htaccess")
             self._create_file(htaccess_path, self._get_htaccess())
 
