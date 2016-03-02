@@ -172,6 +172,7 @@ def os_islink(path):
     if result == INVALID_FILE_ATTRIBUTES:
         raise WinError()
     return bool(result & FILE_ATTRIBUTE_REPARSE_POINT)
+os.path.islink = os_islink
 
 
 def os_readlink(path):
