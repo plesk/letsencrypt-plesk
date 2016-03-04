@@ -5,6 +5,11 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Extension 1.5-1 and Plugin 0.1.5
+* Windows support (2012 and above, Plesk 12.5 MU#24 is required)
+* Translation added (ar, cs-CZ, da-DK, de-DE, el-GR, es-ES, fi-FI, fr-FR, he-IL, hu-HU, id-ID, it-IT, ja-JP, ko-KR, ms-MY, nb-NO, nl-NL, pl-PL, pt-BR, pt-PT, ro-RO, ru-RU, sv-SE, th-TH, tl-PH, tr-TR, uk-UA, vi-VN, zh-CN, zh-TW)
+* Bugfix: Always put .htaccess in the challenges folder (issues #63 and #82)
+
 ## Extension 1.4-1
 * Fix certificates renew task broken in 1.3 (issue 77)
 
