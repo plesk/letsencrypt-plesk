@@ -5,6 +5,9 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Extension 1.6
+* Switch from system python to plesk-py27 on all unix OSes (issues #59, #68, #70)
+
 ## Extension 1.5-1 and Plugin 0.1.5
 * Windows support (2012 and above, Plesk 12.5 MU#24 is required)
 * Translation added (ar, cs-CZ, da-DK, de-DE, el-GR, es-ES, fi-FI, fr-FR, he-IL, hu-HU, id-ID, it-IT, ja-JP, ko-KR, ms-MY, nb-NO, nl-NL, pl-PL, pt-BR, pt-PT, ro-RO, ru-RU, sv-SE, th-TH, tl-PH, tr-TR, uk-UA, vi-VN, zh-CN, zh-TW)
