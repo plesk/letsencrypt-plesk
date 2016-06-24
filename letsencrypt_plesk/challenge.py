@@ -4,7 +4,7 @@ import sys
 import os
 from tempfile import mkstemp
 
-from letsencrypt import errors
+from certbot import errors
 
 from letsencrypt_plesk import api_client
 

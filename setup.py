@@ -22,7 +22,7 @@ version = meta['version']
 
 install_requires = [
     'acme',
-    'letsencrypt',
+    'certbot',
     'requests',
     'setuptools',  # pkg_resources
     'zope.interface',
@@ -39,11 +39,6 @@ dev_extras = [
     'pylint==1.4.2',  # upstream #248
     'twine',
     'wheel',
-]
-
-docs_extras = [
-    'Sphinx>=1.0',  # autodoc_member_order = 'bysource', autodoc_default_flags
-    'sphinx_rtd_theme',
 ]
 
 testing_extras = [
@@ -84,11 +79,10 @@ setup(
     install_requires=install_requires,
     extras_require={
         'dev': dev_extras,
-        'docs': docs_extras,
         'testing': testing_extras,
     },
     entry_points={
-        'letsencrypt.plugins': [
+        'certbot.plugins': [
             'plesk = letsencrypt_plesk.configurator:PleskConfigurator',
         ],
     },

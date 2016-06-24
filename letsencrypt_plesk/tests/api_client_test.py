@@ -4,7 +4,7 @@ import mock
 import pkg_resources
 import os
 
-from letsencrypt import errors
+from certbot import errors
 from letsencrypt_plesk import api_client
 
 
