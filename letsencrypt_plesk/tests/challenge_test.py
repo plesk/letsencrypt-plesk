@@ -2,7 +2,6 @@
 import unittest
 import mock
 
-from letsencrypt import errors
 from letsencrypt_plesk import challenge
 from letsencrypt_plesk.tests import api_mock
 
@@ -86,7 +85,7 @@ class PleskChallengeTest(unittest.TestCase):
         self.challenge.plesk_api_client.will_response(
             'response_site_get_one_error')
 
-        self.assertRaises(errors.DvAuthError, self.challenge._init_domain_props)
+        self.assertRaises(challenge.PleskAuthError, self.challenge._init_domain_props)
         self.challenge.plesk_api_client.assert_called()
 
     def test_init_domain_props_without_hosting(self):
@@ -96,7 +95,7 @@ class PleskChallengeTest(unittest.TestCase):
         self.challenge.plesk_api_client.will_response(
             'response_site_get_one_without_hosting')
 
-        self.assertRaises(errors.DvAuthError, self.challenge._init_domain_props)
+        self.assertRaises(challenge.PleskAuthError, self.challenge._init_domain_props)
         self.challenge.plesk_api_client.assert_called()
 
     def test_filemng(self):
