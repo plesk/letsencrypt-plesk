@@ -4,7 +4,7 @@ import os
 import sys
 from tempfile import mkstemp
 
-from letsencrypt import errors
+from certbot import errors
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ import sys
 import os
 from tempfile import mkstemp
 
-from letsencrypt import errors
+from certbot import errors
 
 from letsencrypt_plesk import api_client
 
@@ -52,11 +52,11 @@ class PleskChallenge(object):
         api_result = response['packet']['site']['get']['result']
         if 'ok' != api_result['status']:
             error_text = str(api_result['errtext'])
-            raise errors.DvAuthError(
+            raise PleskAuthError(
                 'Site "%s" get failure: %s' % (self.domain, error_text))
 
         if 'vrt_hst' not in api_result['data']['hosting']:
-            raise errors.DvAuthError(
+            raise PleskAuthError(
                 'Cannot authenticate domain "%s" without hosting' % self.domain)
 
         hosting_props = api_result['data']['hosting']['vrt_hst']['property']
@@ -167,3 +167,7 @@ class PleskChallenge(object):
     </system.webServer>
 </configuration>
 """
+
+
+class PleskAuthError(errors.PluginError):
+    """Authentication error with specified domain name"""

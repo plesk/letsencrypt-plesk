@@ -8,7 +8,7 @@ import requests
 import logging
 from tempfile import mkstemp
 
-from letsencrypt import errors
+from certbot import errors
 from xml.dom.minidom import Document, parseString
 
 try:

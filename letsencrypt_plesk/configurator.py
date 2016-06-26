@@ -6,10 +6,10 @@ import zope.interface
 
 from acme import challenges
 
-from letsencrypt import interfaces
-from letsencrypt import errors
+from certbot import interfaces
+from certbot import errors
 
-from letsencrypt.plugins import common
+from certbot.plugins import common
 
 from letsencrypt_plesk import api_client
 from letsencrypt_plesk import challenge
