@@ -1,3 +1,4 @@
+[![Apache 2](http://img.shields.io/badge/license-Apache%202-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Build Status](https://travis-ci.org/plesk/letsencrypt-plesk.svg?branch=master)](https://travis-ci.org/plesk/letsencrypt-plesk)
 [![Coverage Status](https://coveralls.io/repos/plesk/letsencrypt-plesk/badge.svg?branch=master&service=github)](https://coveralls.io/github/plesk/letsencrypt-plesk?branch=master)
 
