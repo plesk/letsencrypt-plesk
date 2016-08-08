@@ -12,13 +12,16 @@ from letsencrypt_plesk.tests import api_mock
 class PleskDeployerTest(unittest.TestCase):
     def setUp(self):
         super(PleskDeployerTest, self).setUp()
-        self.deployer = deployer.PleskDeployer(
-            plesk_api_client=api_mock.PleskApiMock(),
-            domain="example.com")
+        self._setUpDeployer()
         with open(self._mock_file('test.crt')) as cert_file:
             with open(self._mock_file('test.key')) as key_file:
                 self.deployer.init_cert(cert_data=cert_file.read(),
                                         key_data=key_file.read())
+
+    def _setUpDeployer(self):
+        self.deployer = deployer.PleskDeployer(
+            plesk_api_client=api_mock.PleskApiMock(),
+            domain="example.com")
 
     def test_install_cert(self):
         self.deployer.plesk_api_client.expects_request(
@@ -105,6 +108,7 @@ class PleskDeployerTest(unittest.TestCase):
         self.deployer.get_certs = mock.MagicMock()
         self.deployer.remove_cert = mock.MagicMock()
         self.deployer.install_cert = mock.MagicMock()
+        self.deployer.update_cert = mock.MagicMock()
         self.deployer.assign_cert = mock.MagicMock()
         self.deployer.secure_plesk = mock.MagicMock()
 
@@ -166,6 +170,38 @@ class PleskDeployerTest(unittest.TestCase):
             '/path/to/cli/extension.exe',
             ['--exec', 'letsencrypt', 'certmng.php',
              '--setup-cp-certificate', mock.ANY])
+
+
+class Plesk17DeployerTest(PleskDeployerTest):
+    def _setUpDeployer(self):
+        self.deployer = deployer.Plesk17Deployer(
+            plesk_api_client=api_mock.PleskApiMock(),
+            domain="example.com")
+
+    def test_install_cert(self):
+        self.deployer.plesk_api_client.expects_request(
+            'request_certificate_update')
+        self.deployer.plesk_api_client.will_response(
+            'response_certificate_update_ok')
+        self.deployer.update_cert()
+        self.deployer.plesk_api_client.assert_called()
+
+    def test_install_cert_error(self):
+        self.deployer.plesk_api_client.expects_request(
+            'request_certificate_update')
+        self.deployer.plesk_api_client.will_response(
+            'response_certificate_update_error')
+        self.assertRaises(errors.PluginError, self.deployer.update_cert)
+        self.deployer.plesk_api_client.assert_called()
+
+    def test_save_renew(self):
+        self._mock_api_methods()
+        self.deployer.cert_installed = False
+        self.deployer.cert_name = mock.MagicMock(return_value='test')
+        self.deployer.get_certs = mock.MagicMock(return_value=['test'])
+
+        self.deployer.save()
+        self.deployer.update_cert.assert_called_once_with()
 
 if __name__ == "__main__":
     unittest.main()  # pragma: no cover

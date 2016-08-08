@@ -111,8 +111,15 @@ class PleskConfiguratorTest(unittest.TestCase):
         achall.domain = domain
         return achall
 
-    @mock.patch('letsencrypt_plesk.deployer.PleskDeployer')
+    @mock.patch('letsencrypt_plesk.deployer.Plesk17Deployer')
     def test_deploy_cert(self, unused_mock_deployer):
+        self._deploy_cert(True)
+
+    @mock.patch('letsencrypt_plesk.deployer.PleskDeployer')
+    def test_deploy_cert_legacy(self, unused_mock_deployer):
+        self._deploy_cert(False)
+
+    def _deploy_cert(self, is_certificate_update_available):
         cert_file = self._mock_file('test.crt')
         with open(cert_file) as fd:
             cert_data = fd.read()
@@ -124,12 +131,15 @@ class PleskConfiguratorTest(unittest.TestCase):
             chain_data = fd.read()
         full_file = self._mock_file('full.crt')
 
+        self.configurator.is_certificate_update_available = mock.MagicMock(
+            return_value=is_certificate_update_available)
         self.configurator.deploy_cert('example.com', cert_file, key_file, chain_file, full_file)
         self.assertTrue('example.com' in self.configurator.plesk_deployers)
         deployer = self.configurator.plesk_deployers['example.com']
         deployer.init_cert.assert_called_with(cert_data, key_data, chain_data)
 
     def test_deploy_cert_www(self):
+        self.configurator.is_certificate_update_available = mock.MagicMock(return_value=True)
         self.configurator.deploy_cert('www.example.com',
                                       self._mock_file('test.crt'),
                                       self._mock_file('test.key'))
@@ -164,6 +174,30 @@ class PleskConfiguratorTest(unittest.TestCase):
     def test_restart(self):
         self.configurator.restart()
         self.configurator.plesk_api_client.cleanup.assert_called_once_with()
+
+    def test_is_certificate_update_available(self):
+        self.configurator.plesk_api_client.expects_request(
+            'request_server_get_protos')
+        self.configurator.plesk_api_client.will_response(
+            'response_server_get_protos_ok')
+        self.assertTrue(self.configurator.is_certificate_update_available())
+        self.configurator.plesk_api_client.assert_called()
+
+    def test_is_certificate_update_available_legacy(self):
+        self.configurator.plesk_api_client.expects_request(
+            'request_server_get_protos')
+        self.configurator.plesk_api_client.will_response(
+            'response_server_get_protos_legacy')
+        self.assertFalse(self.configurator.is_certificate_update_available())
+        self.configurator.plesk_api_client.assert_called()
+
+    def test_is_certificate_update_available_error(self):
+        self.configurator.plesk_api_client.expects_request(
+            'request_server_get_protos')
+        self.configurator.plesk_api_client.will_response(
+            'response_server_get_protos_error')
+        self.assertFalse(self.configurator.is_certificate_update_available())
+        self.configurator.plesk_api_client.assert_called()
 
     @staticmethod
     def _mock_file(name):
