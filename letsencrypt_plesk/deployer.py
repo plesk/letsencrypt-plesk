@@ -155,3 +155,43 @@ class PleskDeployer(object):
         finally:
             os.unlink(cert_tmp)
         self.plesk_secured = True
+
+
+class Plesk17Deployer(PleskDeployer):
+    """Class performs deploy operations within the Plesk configurator."""
+
+    def update_cert(self):
+        """Update the certificate in Plesk."""
+        request = {'packet': {
+            'certificate': {
+                'update': [
+                    {'name': self.cert_name()},
+                    {'site': self.domain},
+                    {'content': [
+                        {'csr': {}},
+                        {'pvt': self.data['key']},
+                        {'cert': self.data['cert']},
+                        {'ca': self.data['chain'] if self.data['chain'] else {}},
+                    ]}
+                ]
+            }
+        }}
+        response = self.plesk_api_client.request(request)
+        api_result = response['packet']['certificate']['update']['result']
+        if 'ok' != api_result['status']:
+            error_text = str(api_result['errtext'])
+            raise errors.PluginError(
+                'Update certificate failure: %s' % error_text)
+        self.cert_installed = True
+
+    def save(self, secure_plesk=False):
+        """Provision changes in Plesk."""
+        if not self.cert_installed:
+            if self.cert_name() in self.get_certs():
+                self.update_cert()
+            else:
+                self.install_cert()
+        if not self.cert_assigned:
+            self.assign_cert()
+        if secure_plesk and not self.plesk_secured:
+            self.secure_plesk()

@@ -1,0 +1,9 @@
+<packet version="1.6.8.0">
+  <server>
+    <get_protos>
+      <result>
+        <status>error</status>
+      </result>
+    </get_protos>
+  </server>
+</packet>

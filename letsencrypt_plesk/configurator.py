@@ -4,6 +4,8 @@ import logging
 import os
 import zope.interface
 
+from pkg_resources import parse_version
+
 from acme import challenges
 
 from certbot import interfaces
@@ -148,7 +150,11 @@ class PleskConfigurator(common.Plugin):
         elif "www." + domain in self.plesk_deployers:
             del self.plesk_deployers["www." + domain]
 
-        plesk_deployer = deployer.PleskDeployer(self.plesk_api_client, domain)
+        if self.is_certificate_update_available():
+            plesk_deployer = deployer.Plesk17Deployer(self.plesk_api_client, domain)
+        else:
+            plesk_deployer = deployer.PleskDeployer(self.plesk_api_client, domain)
+
         with open(cert_path) as cert_file:
             cert_data = cert_file.read()
         with open(key_path) as key_file:
@@ -194,3 +200,18 @@ class PleskConfigurator(common.Plugin):
     def restart(self):
         """Web server has already restarted. Cleanup only."""
         self.plesk_api_client.cleanup()
+
+    def is_certificate_update_available(self):
+        """Checks availability of certificate/update API method"""
+        request = {'packet': {
+            'server': {'get_protos': {}},
+        }}
+        response = self.plesk_api_client.request(request)
+        api_result = response['packet']['server']['get_protos']['result']
+        if 'ok' != api_result['status']:
+            return False
+        protos = api_result['protos']['proto']
+        for proto in protos:
+            if parse_version('1.6.8.0') <= parse_version(proto):
+                return True
+        return False
