@@ -41,6 +41,7 @@ def ssl_wrap_localhost_no_sni(*args, **kwargs):
     if 'server_hostname' in kwargs and '127.0.0.1' == kwargs['server_hostname']:
         orig_has_sni = urllib3_util.HAS_SNI
         urllib3_util.HAS_SNI = False
+        kwargs['server_hostname'] = None
         try:
             return urllib3_util.ssl_wrap_socket(*args, **kwargs)
         finally:
