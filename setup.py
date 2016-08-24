@@ -23,6 +23,7 @@ version = meta['version']
 install_requires = [
     'acme',
     'certbot',
+    'letsencrypt',  # backward compatibility of entry point
     'requests',
     'setuptools',  # pkg_resources
     'zope.interface',
