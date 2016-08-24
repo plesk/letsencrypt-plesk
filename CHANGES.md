@@ -5,6 +5,11 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Plugin 0.1.6
+* ConnectionError on Windows 2012 (issue #103)
+* Update certificate with new API in Onyx
+* Use certbot packages instead of letsencrypt
+
 ## Extension 1.6
 * Switch from system python to plesk-py27 on all unix OSes (issues #59, #68, #70)
 
@@ -14,7 +19,7 @@ The changelog contains both components under the corresponding titles.
 * Bugfix: Always put .htaccess in the challenges folder (issues #63 and #82)
 
 ## Extension 1.4-1
-* Fix certificates renew task broken in 1.3 (issue 77)
+* Fix certificates renew task broken in 1.3 (issue #77)
 
 ## Extension 1.3-1
 * Debian 6 is now supported
