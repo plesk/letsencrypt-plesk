@@ -5,10 +5,12 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
-## Plugin 0.1.6
+## Extension 1.7 and Plugin 0.1.7
 * ConnectionError on Windows 2012 (issue #103)
 * Update certificate with new API in Onyx
 * Use certbot packages instead of letsencrypt
+* Update subscriber agreement
+* Hide disabled webspaces from the domains list
 
 ## Extension 1.6
 * Switch from system python to plesk-py27 on all unix OSes (issues #59, #68, #70)
@@ -45,7 +47,7 @@ The changelog contains both components under the corresponding titles.
 
 ## Plugin 0.1.1
 * Ability to use the certificate for Plesk: `--letsencrypt-plesk:plesk-secure-panel` (issue #11)
- 
+
 ## Extension 1.1-1
 * Ability to include www.domain.tld as an alternative domain name (issue #4)
 * Save the previously used e-mail address (issue #17)
