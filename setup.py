@@ -27,6 +27,7 @@ install_requires = [
     'requests',
     'setuptools',  # pkg_resources
     'zope.interface',
+    'pyopenssl==16.0.0', # workaround for #117
 ]
 
 if sys.version_info < (2, 7):
