@@ -5,6 +5,10 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Extension 1.8
+* Upgrade on Windows recreates virtualenv
+* Fix issues after upgrade Plesk to Onyx
+
 ## Extension 1.7 and Plugin 0.1.7
 * ConnectionError on Windows 2012 (issue #103)
 * Update certificate with new API in Onyx
