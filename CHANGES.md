@@ -5,6 +5,10 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Extension 1.9
+* Ubuntu 16 support
+* Fix dist-upgrade issue on debian/ubuntu OSes
+
 ## Extension 1.8
 * Upgrade on Windows recreates virtualenv
 * Fix issues after upgrade Plesk to Onyx
