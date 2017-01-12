@@ -24,7 +24,7 @@ install_requires = [
     'acme',
     'certbot',
     'letsencrypt',  # backward compatibility of entry point
-    'requests',
+    'requests[security]==2.11.1', # workaround for #141
     'setuptools',  # pkg_resources
     'zope.interface',
     'pyopenssl==16.0.0', # workaround for #117
