@@ -27,7 +27,6 @@ install_requires = [
     'requests[security]==2.11.1', # workaround for #141
     'setuptools',  # pkg_resources
     'zope.interface',
-    'pyopenssl==16.0.0', # workaround for #117
 ]
 
 if sys.version_info < (2, 7):
@@ -82,6 +81,9 @@ setup(
     extras_require={
         'dev': dev_extras,
         'testing': testing_extras,
+        ':"linux" in sys_platform': [
+            'pyopenssl==16.0.0', # workaround for #117
+        ],
     },
     entry_points={
         'certbot.plugins': [
