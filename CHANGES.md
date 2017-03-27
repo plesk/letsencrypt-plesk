@@ -5,6 +5,14 @@ Please note:
 The extension always installs the latest plugin version available on PyPI.
 The changelog contains both components under the corresponding titles.
 
+## Extension 2.0.0
+* Domain aliases support added
+* IDN domains support
+* Granular and reliable renew process: the extension now performs a daily check for certificates which are about to expire and renews them not earlier than 30 days before their expiration
+* Replaced Python-based certbot with PHP-based client
+* Fixed installation issues with python dependencies when 3rd-parties upgrade breaks compatibility
+* Fixed python-related issues (virtualenv and so on) on Windows
+
 ## Extension 1.9
 * Ubuntu 16 support
 * Fix dist-upgrade issue on debian/ubuntu OSes
