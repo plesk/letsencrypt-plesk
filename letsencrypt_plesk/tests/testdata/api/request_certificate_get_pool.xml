@@ -1,9 +1,0 @@
-<packet>
-    <certificate>
-        <get-pool>
-            <filter>
-                <domain-name>example.com</domain-name>
-            </filter>
-        </get-pool>
-    </certificate>
-</packet>
